@@ -1,6 +1,12 @@
-# Timekeeping System - MERN Stack
+# Timekeeping System
 
-A complete timekeeping system built with MongoDB, Express, React, and Node.js.
+A complete timekeeping system with React frontend and Java Spring Boot backend.
+
+## Backend Stack
+
+**Java 25 + Spring Boot 3.4.3 + Maven 3.9.9**
+
+This project uses a modern Java backend for enhanced performance and scalability.
 
 ## Features
 
@@ -14,80 +20,47 @@ A complete timekeeping system built with MongoDB, Express, React, and Node.js.
 
 ```
 timekeeping/
-├── backend/                 # Express.js API server
-│   ├── models/             # MongoDB schemas (User, TimeLog)
-│   ├── routes/             # API routes
-│   ├── controllers/        # Route handlers
-│   ├── middleware/         # Auth middleware
-│   ├── server.js           # Main server file
-│   ├── package.json
-│   └── .env               # Environment variables
+├── backend-java/            # Java/Spring Boot API server
+│   ├── src/main/java/com/timekeeping/api/
+│   │   ├── controller/      # REST controllers
+│   │   ├── service/         # Business logic
+│   │   ├── repository/      # Data access
+│   │   ├── entity/          # MongoDB documents
+│   │   ├── config/          # Spring configuration
+│   │   └── security/        # JWT & security
+│   ├── pom.xml
+│   └── README.md
 │
-└── frontend/              # React application
-    ├── src/
-    │   ├── pages/         # Page components (Login, Register, Dashboard)
-    │   ├── components/    # Reusable components (Timesheet, Calendar)
-    │   ├── context/       # React context for auth
-    │   ├── services/      # API services
-    │   ├── styles/        # CSS files
-    │   ├── App.jsx
-    │   └── index.jsx
-    ├── index.html
-    ├── vite.config.js
-    └── package.json
+└── frontend/                # React application
 ```
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
-- npm or yarn
-- MongoDB (local or Atlas)
+- **Java 25** or higher
+- **Maven 3.9.9** or higher
+- **MongoDB** (local or Atlas)
+- **Node.js** (for frontend development)
 
 ## Installation
 
 ### Backend Setup
 
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Create a `.env` file with the following variables:
-   ```
-   PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/timekeeping
-   JWT_SECRET=your_secret_key_here
-   NODE_ENV=development
-   ```
-
-4. Start the server:
-   ```bash
-   npm run dev
-   ```
+```bash
+cd backend-java
+cp .env.example .env
+mvn clean install
+mvn spring-boot:run
+```
 
 ### Frontend Setup
 
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-The frontend will be available at `http://localhost:3000`
+Visit `http://localhost:5173`
 
 ## API Endpoints
 
@@ -99,9 +72,9 @@ The frontend will be available at `http://localhost:3000`
 ### Time Logging
 - `POST /api/timelog/time-in` - Clock in (protected)
 - `POST /api/timelog/time-out` - Clock out (protected)
-- `GET /api/timelog/daily/:userId` - Get daily log (protected)
-- `GET /api/timelog/monthly/:userId` - Get monthly attendance (protected)
-- `GET /api/timelog/yearly/:userId` - Get yearly statistics (protected)
+- `GET /api/timelog/daily?date=YYYY-MM-DD` - Get daily log (protected)
+- `GET /api/timelog/monthly?year=YYYY&month=MM` - Get monthly attendance (protected)
+- `GET /api/timelog/yearly?year=YYYY` - Get yearly statistics (protected)
 
 ## Usage
 
@@ -113,29 +86,41 @@ The frontend will be available at `http://localhost:3000`
 
 ## Technologies Used
 
-### Backend
-- Express.js - Web framework
-- MongoDB - Database
-- Mongoose - ODM
-- JWT - Authentication
-- bcryptjs - Password hashing
-- CORS - Cross-origin resource sharing
-
-### Frontend
-- React - UI library
-- React Router - Navigation
-- Axios - HTTP client
-- Lucide React - Icons
-- Vite - Build tool
-- CSS3 - Styling
+- **Backend**: Java 25, Spring Boot 3.4.3, Spring Data MongoDB, Spring Security, Maven 3.9.9
+- **Frontend**: React, Vite, Axios, React Router
+- **Database**: MongoDB
+- **Authentication**: JWT (jjwt library)
 
 ## Security Features
 
-- JWT-based authentication
-- Password hashing with bcryptjs
-- Protected API routes with authentication middleware
+- JWT-based authentication with jjwt
+- Password hashing with BCrypt
+- Protected API routes with Spring Security
 - Input validation
 - CORS configuration
+- Spring Security middleware
+
+## Environment Variables
+
+Create a `.env` file in `backend-java/` directory:
+
+```
+MONGODB_URI=mongodb://localhost:27017/timekeeping
+JWT_SECRET=your-super-secret-key-change-this-in-production
+JWT_EXPIRATION=2592000000
+```
+
+## Troubleshooting
+
+### Java Backend Issues
+- Ensure Java 25+ is installed: `java -version`
+- Ensure Maven 3.9.9+ is installed: `mvn --version`
+- Check that port 5000 is available
+- Verify MongoDB is running
+
+### Frontend Issues
+- Clear npm cache if needed: `npm cache clean --force`
+- Reinstall dependencies if needed: `rm -rf node_modules && npm install`
 
 ## Future Enhancements
 
@@ -147,3 +132,13 @@ The frontend will be available at `http://localhost:3000`
 - Mobile app
 - Team management
 - Department-wise statistics
+- Advanced reporting
+- Integration with HR systems
+
+## Additional Resources
+
+- [Backend README](./backend-java/README.md) - Detailed Java backend documentation
+- [pom.xml](./backend-java/pom.xml) - Maven configuration (Java 25, Spring Boot 3.4.3, Maven 3.9.9)
+- Spring Boot Docs: https://spring.io/projects/spring-boot
+- Java 25 Docs: https://openjdk.org
+- jjwt Documentation: https://github.com/jwtk/jjwt
