@@ -4,7 +4,7 @@ import { timeLogService } from '../services/api';
 import { Clock, LogOut } from 'lucide-react';
 import '../styles/Timesheet.css';
 
-const Timesheet = () => {
+const Timesheet = ({ onTimeLogUpdate }) => {
   const { user, logout, loading } = useContext(AuthContext);
   const [todayLog, setTodayLog] = useState(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -32,6 +32,7 @@ const Timesheet = () => {
       const response = await timeLogService.timeIn();
       setTodayLog(response.data.timeLog);
       setMessage('Time in recorded successfully!');
+      onTimeLogUpdate?.();
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Error recording time in');
@@ -46,6 +47,7 @@ const Timesheet = () => {
       const response = await timeLogService.timeOut();
       setTodayLog(response.data.timeLog);
       setMessage('Time out recorded successfully!');
+      onTimeLogUpdate?.();
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Error recording time out');
