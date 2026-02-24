@@ -1,0 +1,10 @@
+- [x] Create project directory structure
+- [x] Setup backend with Node/Express
+- [x] Setup frontend with React
+- [x] Create MongoDB models
+- [x] Implement authentication
+- [x] Create API routes and controllers
+- [x] Build React components
+- [ ] Install dependencies
+- [ ] Test the application
+- [ ] Deploy to production
