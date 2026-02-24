@@ -40,12 +40,20 @@ const TimeLogSchema = new mongoose.Schema({
 
 // Calculate hours worked
 TimeLogSchema.methods.calculateHours = function() {
-  if (this.timeOut) {
+
     const diffInMilliseconds = this.timeOut - this.timeIn;
     const diffInHours = diffInMilliseconds / (1000 * 60 * 60);
     this.hoursWorked = Math.round(diffInHours * 100) / 100;
-  }
-  return this.hoursWorked;
+
+    if (this.hoursWorked <= 4) {
+        this.status = 'absent';
+    } else if (this.hoursWorked < 8) {
+        this.status = 'half-day';
+    } else {
+        this.status = 'present';
+    }
+
+    return this;
 };
 
 export default mongoose.model('TimeLog', TimeLogSchema);
