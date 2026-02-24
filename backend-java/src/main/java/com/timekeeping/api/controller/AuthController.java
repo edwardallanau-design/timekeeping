@@ -3,14 +3,11 @@ package com.timekeeping.api.controller;
 import com.timekeeping.api.dto.AuthRequest;
 import com.timekeeping.api.dto.AuthResponse;
 import com.timekeeping.api.dto.ErrorResponse;
-import com.timekeeping.api.dto.UserResponse;
 import com.timekeeping.api.security.UserPrincipal;
 import com.timekeeping.api.service.AuthService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,20 +16,23 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody AuthRequest request) {
         try {
-            if (request.getName() == null || request.getEmail() == null || request.getPassword() == null) {
+            if (request.name() == null || request.email() == null || request.password() == null) {
                 return ResponseEntity.badRequest()
                         .body(new ErrorResponse(false, "Please provide all required fields"));
             }
 
-            AuthResponse response = authService.register(request);
+            var response = authService.register(request);
 
-            if (!response.isSuccess()) {
+            if (!response.success()) {
                 return ResponseEntity.badRequest().body(response);
             }
 
@@ -46,14 +46,14 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequest request) {
         try {
-            if (request.getEmail() == null || request.getPassword() == null) {
+            if (request.email() == null || request.password() == null) {
                 return ResponseEntity.badRequest()
                         .body(new ErrorResponse(false, "Please provide email and password"));
             }
 
-            AuthResponse response = authService.login(request);
+            var response = authService.login(request);
 
-            if (!response.isSuccess()) {
+            if (!response.success()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
@@ -67,15 +67,13 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<?> getMe() {
         try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal)) {
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal userPrincipal)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ErrorResponse(false, "Not authorized to access this route"));
             }
 
-            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-            UserResponse userResponse = authService.getMe(userPrincipal.getId());
-
+            var userResponse = authService.getMe(userPrincipal.getId());
             if (userResponse == null) {
                 return ResponseEntity.notFound().build();
             }

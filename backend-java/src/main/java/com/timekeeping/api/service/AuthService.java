@@ -1,88 +1,61 @@
 package com.timekeeping.api.service;
 
+import com.timekeeping.api.config.JwtTokenProvider;
 import com.timekeeping.api.dto.AuthRequest;
 import com.timekeeping.api.dto.AuthResponse;
 import com.timekeeping.api.dto.UserResponse;
 import com.timekeeping.api.entity.User;
 import com.timekeeping.api.repository.UserRepository;
-import com.timekeeping.api.config.JwtTokenProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 public class AuthService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final JwtTokenProvider tokenProvider;
 
-    @Autowired
-    private JwtTokenProvider tokenProvider;
+    public AuthService(UserRepository userRepository, JwtTokenProvider tokenProvider) {
+        this.userRepository = userRepository;
+        this.tokenProvider = tokenProvider;
+    }
 
     public AuthResponse register(AuthRequest request) {
-        // Check if user already exists
-        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
-        if (existingUser.isPresent()) {
+        if (userRepository.findByEmail(request.email()).isPresent()) {
             return new AuthResponse(false, null, null, "Email already registered");
         }
 
-        // Create new user
-        User user = new User(
-                request.getName(),
-                request.getEmail(),
-                request.getPassword(),
-                request.getDepartment()
-        );
+        var user = new User(request.name(), request.email(), request.password(), request.department());
         user.encodePassword();
 
-        User savedUser = userRepository.save(user);
-
-        String token = tokenProvider.generateToken(savedUser.getId());
-        UserResponse userResponse = new UserResponse(
-                savedUser.getId(),
-                savedUser.getName(),
-                savedUser.getEmail(),
-                savedUser.getDepartment()
-        );
+        var savedUser = userRepository.save(user);
+        var token = tokenProvider.generateToken(savedUser.getId());
+        var userResponse = new UserResponse(
+                savedUser.getId(), savedUser.getName(), savedUser.getEmail(), savedUser.getDepartment());
 
         return new AuthResponse(true, token, userResponse, null);
     }
 
     public AuthResponse login(AuthRequest request) {
-        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+        var userOptional = userRepository.findByEmail(request.email());
         if (userOptional.isEmpty()) {
             return new AuthResponse(false, null, null, "Invalid credentials");
         }
 
-        User user = userOptional.get();
-        if (!user.matchPassword(request.getPassword())) {
+        var user = userOptional.get();
+        if (!user.matchPassword(request.password())) {
             return new AuthResponse(false, null, null, "Invalid credentials");
         }
 
-        String token = tokenProvider.generateToken(user.getId());
-        UserResponse userResponse = new UserResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getDepartment()
-        );
+        var token = tokenProvider.generateToken(user.getId());
+        var userResponse = new UserResponse(
+                user.getId(), user.getName(), user.getEmail(), user.getDepartment());
 
         return new AuthResponse(true, token, userResponse, null);
     }
 
     public UserResponse getMe(String userId) {
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (userOptional.isEmpty()) {
-            return null;
-        }
-
-        User user = userOptional.get();
-        return new UserResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getDepartment()
-        );
+        return userRepository.findById(userId)
+                .map(user -> new UserResponse(user.getId(), user.getName(), user.getEmail(), user.getDepartment()))
+                .orElse(null);
     }
 }

@@ -5,12 +5,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 public class UserPrincipal implements UserDetails {
-    private String id;
-    private String email;
-    private String password;
+
+    private final String id;
+    private final String email;
+    private final String password;
 
     public UserPrincipal(User user) {
         this.id = user.getId();
@@ -34,7 +35,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return List.of();
     }
 
     @Override
