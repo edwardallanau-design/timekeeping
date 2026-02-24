@@ -1,10 +1,9 @@
 package com.timekeeping.api.entity;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,12 +12,15 @@ import java.time.temporal.ChronoUnit;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "timelogs")
+@Entity
+@Table(name = "time_logs")
 public class TimeLog {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @Column(name = "user_id", nullable = false)
     private String userId;
 
     private LocalDate date;
