@@ -4,7 +4,7 @@ import { timeLogService } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/AttendanceCalendar.css';
 
-const AttendanceCalendar = () => {
+const AttendanceCalendar = ({ refreshTrigger }) => {
   const { user, loading } = useContext(AuthContext);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [logs, setLogs] = useState([]);
@@ -15,7 +15,7 @@ const AttendanceCalendar = () => {
     if (!loading && user?.id) {
       fetchMonthlyLogs();
     }
-  }, [currentDate, loading, user?.id]);
+  }, [currentDate, loading, user?.id, refreshTrigger]);
 
   const fetchMonthlyLogs = async () => {
     if (!user?.id || loading) return;

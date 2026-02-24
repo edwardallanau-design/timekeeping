@@ -1,14 +1,17 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { timeLogService } from '../services/api';
-import { Clock, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
+import AnalogClock from './AnalogClock';
 import '../styles/Timesheet.css';
 
-const Timesheet = () => {
+const Timesheet = ({ onTimeLogUpdate }) => {
   const { user, logout, loading } = useContext(AuthContext);
   const [todayLog, setTodayLog] = useState(null);
   const [isFetching, setIsFetching] = useState(false);
   const [message, setMessage] = useState('');
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationData, setConfirmationData] = useState(null);
 
   useEffect(() => {
     // Wait until user is loaded and we have a valid user ID
@@ -32,6 +35,7 @@ const Timesheet = () => {
       const response = await timeLogService.timeIn();
       setTodayLog(response.data.timeLog);
       setMessage('Time in recorded successfully!');
+      onTimeLogUpdate?.();
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Error recording time in');
@@ -41,17 +45,54 @@ const Timesheet = () => {
   };
 
   const handleTimeOut = async () => {
+    if (!todayLog) return;
+
+    // Calculate hours worked
+    const timeInDate = new Date(todayLog.timeIn);
+    const timeOutDate = new Date();
+    const diffInMilliseconds = timeOutDate - timeInDate;
+    const hoursWorked = Math.round((diffInMilliseconds / (1000 * 60 * 60)) * 100) / 100;
+
+    let warningMessage = '';
+    let status= '';
+
+    if (hoursWorked < 4) {
+        status = 'absent';
+        warningMessage = `You will be marked as ${status}.`;
+    } else if (hoursWorked < 8) {
+        status = 'half-day';
+        warningMessage = `You will be marked as ${status}.`;
+    }
+
+    // Show confirmation dialog
+    setConfirmationData({
+      hoursWorked,
+      warningMessage,
+      status
+    });
+    setShowConfirmation(true);
+  };
+
+  const confirmTimeOut = async () => {
+    setShowConfirmation(false);
     setIsFetching(true);
     try {
-      const response = await timeLogService.timeOut();
+      const response = await timeLogService.timeOut(confirmationData.status);
       setTodayLog(response.data.timeLog);
       setMessage('Time out recorded successfully!');
+      onTimeLogUpdate?.();
+      setConfirmationData(null);
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Error recording time out');
     } finally {
       setIsFetching(false);
     }
+  };
+
+  const cancelTimeOut = () => {
+    setShowConfirmation(false);
+    setConfirmationData(null);
   };
 
   const formatTime = (date) => {
@@ -62,15 +103,11 @@ const Timesheet = () => {
     <div className="timesheet-container">
       <div className="timesheet-header">
         <h1>Welcome, {user?.name}</h1>
-        <button onClick={logout} className="logout-btn">
-          <LogOut size={20} />
-          Logout
-        </button>
       </div>
 
       <div className="timesheet-content">
         <div className="time-card">
-          <Clock size={48} />
+          <AnalogClock />
           <h2>Today's Attendance</h2>
           
           {message && <div className="message">{message}</div>}
@@ -80,7 +117,6 @@ const Timesheet = () => {
               <>
                 <p>Time In: {formatTime(todayLog.timeIn)}</p>
                 {todayLog.timeOut && <p>Time Out: {formatTime(todayLog.timeOut)}</p>}
-                {todayLog.hoursWorked && <p>Hours Worked: {todayLog.hoursWorked}h</p>}
               </>
             )}
           </div>
@@ -103,6 +139,37 @@ const Timesheet = () => {
           </div>
         </div>
       </div>
+
+      <div className="timesheet-footer">
+        <button onClick={logout} className="logout-btn">
+          <LogOut size={20} />
+          Logout
+        </button>
+      </div>
+
+      {showConfirmation && confirmationData && (
+        <div className="modal-overlay">
+          <div className="confirmation-modal">
+            <h3>Confirm Time Out</h3>
+            <div className="confirmation-content">
+              <p className="hours-display">
+                Total Hours Worked: <strong>{confirmationData.hoursWorked}h</strong>
+              </p>
+                <p className="status-display">
+                Status: <strong>{confirmationData.status.toUpperCase()}</strong>
+              </p>
+            </div>
+            <div className="modal-buttons">
+              <button onClick={confirmTimeOut} className="btn-confirm">
+                Confirm
+              </button>
+              <button onClick={cancelTimeOut} className="btn-cancel">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
