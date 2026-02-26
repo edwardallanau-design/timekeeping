@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { authService } from '../services/api';
@@ -34,7 +34,7 @@ const Login = () => {
       <div className="auth-form">
         <h1>Timekeeping System</h1>
         <h2>Login</h2>
-        
+
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit}>
@@ -64,7 +64,7 @@ const Login = () => {
         </form>
 
         <p className="auth-link">
-          Don't have an account? <a href="/register">Register here</a>
+          Don&apos;t have an account? <a href="/register">Register here</a>
         </p>
       </div>
     </div>

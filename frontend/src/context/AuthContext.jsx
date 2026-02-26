@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
 export const AuthContext = createContext();
@@ -17,18 +17,16 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   useEffect(() => {
-    // Restore session on mount/refresh
     const restoreSession = async () => {
       const savedToken = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
+      const savedUser  = localStorage.getItem('user');
 
       if (savedToken && savedUser) {
         setToken(savedToken);
         try {
           const response = await api.get('/auth/me');
           setUser(response.data.user);
-        } catch (error) {
-          // Token is invalid, clear storage
+        } catch {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           setToken(null);

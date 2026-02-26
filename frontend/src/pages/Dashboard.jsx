@@ -1,15 +1,14 @@
-import React, { useContext, useState } from 'react';
+import { useContext, useState } from 'react';
 import Timesheet from '../components/Timesheet';
 import AttendanceCalendar from '../components/AttendanceCalendar';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
-  const { user, loading } = useContext(AuthContext);
+  const { loading } = useContext(AuthContext);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleTimeLogUpdate = () => {
-    // Increment to trigger calendar refresh
     setRefreshTrigger(prev => prev + 1);
   };
 

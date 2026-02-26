@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { authService } from '../services/api';
@@ -17,10 +17,7 @@ const Register = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -45,7 +42,7 @@ const Register = () => {
       <div className="auth-form">
         <h1>Timekeeping System</h1>
         <h2>Register</h2>
-        
+
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit}>

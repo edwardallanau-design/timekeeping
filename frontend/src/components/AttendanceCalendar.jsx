@@ -1,8 +1,20 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useContext, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { timeLogService } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/AttendanceCalendar.css';
+
+/** Converts backend enum (e.g. HALF_DAY) to a CSS-friendly class (e.g. half-day) */
+const statusToClass = (status) => {
+  if (!status) return 'none';
+  return status.toLowerCase().replace('_', '-');
+};
+
+/** Human-readable label for display */
+const statusLabel = (status) => {
+  const labels = { PRESENT: 'Present', HALF_DAY: 'Half Day', ABSENT: 'Absent' };
+  return labels[status] ?? status;
+};
 
 const AttendanceCalendar = ({ refreshTrigger }) => {
   const { user, loading } = useContext(AuthContext);
@@ -11,7 +23,6 @@ const AttendanceCalendar = ({ refreshTrigger }) => {
   const [isFetching, setIsFetching] = useState(false);
 
   useEffect(() => {
-    // Wait until user is loaded and we have a valid user ID
     if (!loading && user?.id) {
       fetchMonthlyLogs();
     }
@@ -19,11 +30,10 @@ const AttendanceCalendar = ({ refreshTrigger }) => {
 
   const fetchMonthlyLogs = async () => {
     if (!user?.id || loading) return;
-    
     setIsFetching(true);
     try {
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
+      const year  = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1;
       const response = await timeLogService.getMonthlyAttendance(year, month);
       setLogs(response.data.logs);
     } catch (error) {
@@ -33,79 +43,55 @@ const AttendanceCalendar = ({ refreshTrigger }) => {
     }
   };
 
-  const getDaysInMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
+  const getDaysInMonth = (date) =>
+    new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
-  const getFirstDayOfMonth = (date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  };
+  const getFirstDayOfMonth = (date) =>
+    new Date(date.getFullYear(), date.getMonth(), 1).getDay();
 
-  const getLogForDate = (day) => {
-    return logs.find(log => {
-      const logDate = new Date(log.date);
-      return logDate.getDate() === day;
-    });
-  };
+  const getLogForDay = (day) =>
+    logs.find(log => new Date(log.date + 'T00:00:00').getDate() === day);
 
-  const previousMonth = () => {
+  const previousMonth = () =>
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
-  };
 
-  const nextMonth = () => {
+  const nextMonth = () =>
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
-  };
 
-  const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-  const daysInMonth = getDaysInMonth(currentDate);
-  const firstDay = getFirstDayOfMonth(currentDate);
+  const monthName    = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const daysInMonth  = getDaysInMonth(currentDate);
+  const firstDay     = getFirstDayOfMonth(currentDate);
 
-  const calendarDays = [];
-  for (let i = 0; i < firstDay; i++) {
-    calendarDays.push(null);
-  }
-  for (let day = 1; day <= daysInMonth; day++) {
-    calendarDays.push(day);
-  }
+  const calendarDays = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1)
+  ];
 
   return (
     <div className="calendar-container">
       <div className="calendar-header">
-        <button onClick={previousMonth}>
-          <ChevronLeft size={20} />
-        </button>
+        <button onClick={previousMonth}><ChevronLeft size={20} /></button>
         <h2>{monthName}</h2>
-        <button onClick={nextMonth}>
-          <ChevronRight size={20} />
-        </button>
+        <button onClick={nextMonth}><ChevronRight size={20} /></button>
       </div>
 
       <div className="weekdays">
-        <div>Sun</div>
-        <div>Mon</div>
-        <div>Tue</div>
-        <div>Wed</div>
-        <div>Thu</div>
-        <div>Fri</div>
-        <div>Sat</div>
+        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d}>{d}</div>)}
       </div>
 
       <div className="calendar-grid">
         {calendarDays.map((day, index) => {
-          const log = day ? getLogForDate(day) : null;
-          const status = log ? log.status : 'none';
+          const log        = day ? getLogForDay(day) : null;
+          const cssClass   = log ? statusToClass(log.status) : 'none';
 
           return (
-            <div 
-              key={index} 
-              className={`calendar-day ${status}`}
-            >
+            <div key={index} className={`calendar-day ${cssClass}`}>
               {day && (
                 <>
                   <div className="day-number">{day}</div>
                   {log && (
                     <div className="day-info">
-                      <span className="time-badge">{log.status}</span>
+                      <span className="time-badge">{statusLabel(log.status)}</span>
                       {log.hoursWorked > 0 && (
                         <span className="hours">{log.hoursWorked}h</span>
                       )}
@@ -118,10 +104,12 @@ const AttendanceCalendar = ({ refreshTrigger }) => {
         })}
       </div>
 
+      {isFetching && <div className="calendar-loading">Loading...</div>}
+
       <div className="calendar-legend">
-        <div><span className="legend-present"></span> Present</div>
-        <div><span className="legend-absent"></span> Absent</div>
-        <div><span className="legend-halfday"></span> Half Day</div>
+        <div><span className="legend-present" /> Present</div>
+        <div><span className="legend-absent" />  Absent</div>
+        <div><span className="legend-halfday" /> Half Day</div>
       </div>
     </div>
   );

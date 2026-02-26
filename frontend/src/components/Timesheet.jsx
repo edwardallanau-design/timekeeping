@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { timeLogService } from '../services/api';
 import { LogOut } from 'lucide-react';
@@ -14,7 +14,6 @@ const Timesheet = ({ onTimeLogUpdate }) => {
   const [confirmationData, setConfirmationData] = useState(null);
 
   useEffect(() => {
-    // Wait until user is loaded and we have a valid user ID
     if (!loading && user?.id) {
       fetchTodayLog();
     }
@@ -32,8 +31,9 @@ const Timesheet = ({ onTimeLogUpdate }) => {
   const handleTimeIn = async () => {
     setIsFetching(true);
     try {
+      // timeIn now returns TimeLogDto directly
       const response = await timeLogService.timeIn();
-      setTodayLog(response.data.timeLog);
+      setTodayLog(response.data);
       setMessage('Time in recorded successfully!');
       onTimeLogUpdate?.();
       setTimeout(() => setMessage(''), 3000);
@@ -47,29 +47,14 @@ const Timesheet = ({ onTimeLogUpdate }) => {
   const handleTimeOut = async () => {
     if (!todayLog) return;
 
-    // Calculate hours worked
-    const timeInDate = new Date(todayLog.timeIn);
+    const timeInDate  = new Date(todayLog.timeIn);
     const timeOutDate = new Date();
-    const diffInMilliseconds = timeOutDate - timeInDate;
-    const hoursWorked = Math.round((diffInMilliseconds / (1000 * 60 * 60)) * 100) / 100;
+    const diffMs      = timeOutDate - timeInDate;
+    const hoursWorked = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100;
 
-    let warningMessage = '';
-    let status= '';
+    const status = hoursWorked < 8 ? 'half-day' : 'present';
 
-    if (hoursWorked < 4) {
-        status = 'absent';
-        warningMessage = `You will be marked as ${status}.`;
-    } else if (hoursWorked < 8) {
-        status = 'half-day';
-        warningMessage = `You will be marked as ${status}.`;
-    }
-
-    // Show confirmation dialog
-    setConfirmationData({
-      hoursWorked,
-      warningMessage,
-      status
-    });
+    setConfirmationData({ hoursWorked, status });
     setShowConfirmation(true);
   };
 
@@ -77,8 +62,9 @@ const Timesheet = ({ onTimeLogUpdate }) => {
     setShowConfirmation(false);
     setIsFetching(true);
     try {
-      const response = await timeLogService.timeOut(confirmationData.status);
-      setTodayLog(response.data.timeLog);
+      // timeOut now returns TimeLogDto directly
+      const response = await timeLogService.timeOut();
+      setTodayLog(response.data);
       setMessage('Time out recorded successfully!');
       onTimeLogUpdate?.();
       setConfirmationData(null);
@@ -95,9 +81,7 @@ const Timesheet = ({ onTimeLogUpdate }) => {
     setConfirmationData(null);
   };
 
-  const formatTime = (date) => {
-    return new Date(date).toLocaleTimeString();
-  };
+  const formatTime = (date) => new Date(date).toLocaleTimeString();
 
   return (
     <div className="timesheet-container">
@@ -108,8 +92,8 @@ const Timesheet = ({ onTimeLogUpdate }) => {
       <div className="timesheet-content">
         <div className="time-card">
           <AnalogClock />
-          <h2>Today's Attendance</h2>
-          
+          <h2>Today&apos;s Attendance</h2>
+
           {message && <div className="message">{message}</div>}
 
           <div className="time-info">
@@ -122,15 +106,15 @@ const Timesheet = ({ onTimeLogUpdate }) => {
           </div>
 
           <div className="button-group">
-            <button 
-              onClick={handleTimeIn} 
+            <button
+              onClick={handleTimeIn}
               disabled={isFetching || (todayLog && todayLog.timeIn && !todayLog.timeOut)}
               className="btn btn-primary"
             >
               {isFetching ? 'Processing...' : 'Time In'}
             </button>
-            <button 
-              onClick={handleTimeOut} 
+            <button
+              onClick={handleTimeOut}
               disabled={isFetching || !todayLog || todayLog.timeOut}
               className="btn btn-danger"
             >
@@ -155,17 +139,13 @@ const Timesheet = ({ onTimeLogUpdate }) => {
               <p className="hours-display">
                 Total Hours Worked: <strong>{confirmationData.hoursWorked}h</strong>
               </p>
-                <p className="status-display">
+              <p className="status-display">
                 Status: <strong>{confirmationData.status.toUpperCase()}</strong>
               </p>
             </div>
             <div className="modal-buttons">
-              <button onClick={confirmTimeOut} className="btn-confirm">
-                Confirm
-              </button>
-              <button onClick={cancelTimeOut} className="btn-cancel">
-                Cancel
-              </button>
+              <button onClick={confirmTimeOut} className="btn-confirm">Confirm</button>
+              <button onClick={cancelTimeOut}  className="btn-cancel">Cancel</button>
             </div>
           </div>
         </div>

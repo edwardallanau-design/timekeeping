@@ -1,24 +1,63 @@
-# Maven
+# ── Maven ──────────────────────────────────────────────────────────────────
 target/
 *.jar
 *.war
 *.ear
+*.zip
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+.flattened-pom.xml
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
 
-# IDE
+# ── IDE ─────────────────────────────────────────────────────────────────────
 .idea/
 *.iml
+*.iws
+*.ipr
 .vscode/
 *.classpath
 *.project
+.classpath
+.project
 .settings/
+.sts4-cache/
+.factorypath
+*.sublime-project
+*.sublime-workspace
 
-# Claude Code (local-only settings, not for sharing)
-.claude/settings.local.json
-
-# Environment
+# ── Security & Secrets ──────────────────────────────────────────────────────
 .env
 .env.local
+.env.*.local
+.claude/settings.local.json
+*.pem
+*.key
+*.secret
 
-# OS
+# ── Java ────────────────────────────────────────────────────────────────────
+*.class
+*.ctxt
+.mtj.tmp/
+*.jar
+*.jar.asc
+
+# ── OS ──────────────────────────────────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# ── Logs & Temp ────────────────────────────────────────────────────────────
+*.log
+*.log.*
+logs/
+tmp/
+temp/
