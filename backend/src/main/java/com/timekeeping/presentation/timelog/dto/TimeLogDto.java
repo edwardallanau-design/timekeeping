@@ -14,7 +14,8 @@ public record TimeLogDto(
         LocalDateTime timeOut,
         double hoursWorked,
         AttendanceStatus status,
-        String notes
+        String notes,
+        String timezone
 ) {
     public static TimeLogDto from(TimeLogResult result) {
         return new TimeLogDto(
@@ -25,7 +26,8 @@ public record TimeLogDto(
                 result.timeOut(),
                 result.hoursWorked(),
                 result.status(),
-                result.notes()
+                result.notes(),
+                result.timezone()
         );
     }
 }

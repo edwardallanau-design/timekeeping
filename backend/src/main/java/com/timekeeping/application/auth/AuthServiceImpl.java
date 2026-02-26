@@ -1,5 +1,6 @@
 package com.timekeeping.application.auth;
 
+import com.timekeeping.domain.user.Role;
 import com.timekeeping.domain.user.User;
 import com.timekeeping.domain.user.UserRegisteredEvent;
 import com.timekeeping.domain.user.UserRepository;
@@ -43,7 +44,8 @@ class AuthServiceImpl implements AuthService {
         }
 
         var encodedPassword = passwordEncoder.encode(command.password());
-        var user            = new User(command.name(), command.email(), encodedPassword, command.department());
+        var role            = userRepository.count() == 0 ? Role.DEVELOPER : Role.EMPLOYEE;
+        var user            = new User(command.name(), command.email(), encodedPassword, command.department(), role);
         var savedUser       = userRepository.save(user);
 
         eventPublisher.publishEvent(

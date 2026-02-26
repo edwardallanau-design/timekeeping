@@ -1,11 +1,15 @@
 // ─── Domain / API shapes ──────────────────────────────────────────────────────
 
+/** User role enumeration. */
+export type UserRole = 'DEVELOPER' | 'ADMIN' | 'MANAGER' | 'EMPLOYEE';
+
 /** A registered user returned from the backend. */
 export interface User {
   id: number;
   name: string;
   email: string;
   department: string;
+  role: UserRole;
 }
 
 /** Attendance classification returned by the backend as an uppercase enum string. */
@@ -49,6 +53,12 @@ export interface RegisterRequest {
   department: string;
 }
 
+/** Developer request for custom time-in/out. */
+export interface DevTimeRequest {
+  dateTime: string;
+  timezone: string;
+}
+
 /** Shape returned by POST /auth/login and POST /auth/register. */
 export interface AuthResponse {
   token: string;
@@ -90,6 +100,7 @@ export interface AuthContextValue {
   token: string | null;
   loading: boolean;
   isAuthenticated: boolean;
+  isDeveloper: boolean;
   login: (user: User, token: string) => void;
   logout: () => void;
 }

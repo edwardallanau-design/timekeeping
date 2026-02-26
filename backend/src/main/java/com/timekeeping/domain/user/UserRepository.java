@@ -16,4 +16,6 @@ public interface UserRepository {
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    long count();
 }

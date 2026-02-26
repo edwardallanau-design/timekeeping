@@ -3,17 +3,35 @@ import { useAuth } from '../context/AuthContext';
 import { timeLogService } from '../services/api';
 import { LogOut } from 'lucide-react';
 import AnalogClock from './AnalogClock';
-import type { TimeLogDto, TimesheetProps, ConfirmationData } from '../types';
+import type { TimeLogDto, TimesheetProps, ConfirmationData, DevTimeRequest } from '../types';
 import axios from 'axios';
 import '../styles/Timesheet.css';
 
+const COMMON_TIMEZONES = [
+  'UTC',
+  'America/New_York',
+  'America/Chicago',
+  'America/Los_Angeles',
+  'Europe/London',
+  'Europe/Paris',
+  'Asia/Tokyo',
+  'Asia/Shanghai',
+  'Asia/Manila',
+  'Australia/Sydney',
+  'Pacific/Auckland',
+];
+
 function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
-  const { user, logout, loading } = useAuth();
+  const { user, isDeveloper, logout, loading } = useAuth();
   const [todayLog, setTodayLog]             = useState<TimeLogDto | null>(null);
   const [isFetching, setIsFetching]         = useState<boolean>(false);
   const [message, setMessage]               = useState<string>('');
   const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
   const [confirmationData, setConfirmationData] = useState<ConfirmationData | null>(null);
+  const [selectedTimezone, setSelectedTimezone] = useState<string>(
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
+  const [customDateTime, setCustomDateTime] = useState<string>('');
 
   useEffect(() => {
     if (!loading && user?.id) {
@@ -89,6 +107,64 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
     setConfirmationData(null);
   };
 
+  const handleDevTimeIn = async (): Promise<void> => {
+    if (!customDateTime) {
+      setMessage('Please select a date and time');
+      return;
+    }
+
+    setIsFetching(true);
+    try {
+      const request: DevTimeRequest = {
+        dateTime: new Date(customDateTime).toISOString().slice(0, 19),
+        timezone: selectedTimezone,
+      };
+      const response = await timeLogService.timeInCustom(request);
+      setTodayLog(response.data);
+      setMessage('Dev Time In recorded successfully!');
+      setCustomDateTime('');
+      onTimeLogUpdate();
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setMessage((err.response?.data as { message?: string })?.message ?? 'Error recording dev time in');
+      } else {
+        setMessage('Error recording dev time in');
+      }
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  const handleDevTimeOut = async (): Promise<void> => {
+    if (!customDateTime) {
+      setMessage('Please select a date and time');
+      return;
+    }
+
+    setIsFetching(true);
+    try {
+      const request: DevTimeRequest = {
+        dateTime: new Date(customDateTime).toISOString().slice(0, 19),
+        timezone: selectedTimezone,
+      };
+      const response = await timeLogService.timeOutCustom(request);
+      setTodayLog(response.data);
+      setMessage('Dev Time Out recorded successfully!');
+      setCustomDateTime('');
+      onTimeLogUpdate();
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setMessage((err.response?.data as { message?: string })?.message ?? 'Error recording dev time out');
+      } else {
+        setMessage('Error recording dev time out');
+      }
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
   const formatTime = (dateStr: string): string => new Date(dateStr).toLocaleTimeString();
 
   return (
@@ -99,7 +175,14 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
 
       <div className="timesheet-content">
         <div className="time-card">
-          <AnalogClock />
+          {isDeveloper ? (
+            <div className="dev-clocks">
+              <AnalogClock label="Local" />
+              <AnalogClock timezone={selectedTimezone} label={selectedTimezone} />
+            </div>
+          ) : (
+            <AnalogClock />
+          )}
           <h2>Today&apos;s Attendance</h2>
 
           {message && <div className="message">{message}</div>}
@@ -129,6 +212,55 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
               {isFetching ? 'Processing...' : 'Time Out'}
             </button>
           </div>
+
+          {isDeveloper && (
+            <div className="dev-panel">
+              <div className="dev-badge">DEV TOOLS</div>
+              <div className="dev-controls">
+                <div className="dev-form-group">
+                  <label htmlFor="dev-timezone">Timezone:</label>
+                  <select
+                    id="dev-timezone"
+                    value={selectedTimezone}
+                    onChange={(e) => setSelectedTimezone(e.target.value)}
+                    className="dev-select"
+                  >
+                    {COMMON_TIMEZONES.map((tz) => (
+                      <option key={tz} value={tz}>{tz}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="dev-form-group">
+                  <label htmlFor="dev-datetime">Date & Time:</label>
+                  <input
+                    id="dev-datetime"
+                    type="datetime-local"
+                    value={customDateTime}
+                    onChange={(e) => setCustomDateTime(e.target.value)}
+                    className="dev-input"
+                  />
+                </div>
+
+                <div className="dev-buttons">
+                  <button
+                    onClick={handleDevTimeIn}
+                    disabled={isFetching || !customDateTime}
+                    className="btn btn-dev-in"
+                  >
+                    {isFetching ? 'Processing...' : '[Dev Time In]'}
+                  </button>
+                  <button
+                    onClick={handleDevTimeOut}
+                    disabled={isFetching || !customDateTime}
+                    className="btn btn-dev-out"
+                  >
+                    {isFetching ? 'Processing...' : '[Dev Time Out]'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

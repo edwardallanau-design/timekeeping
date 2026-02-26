@@ -39,4 +39,9 @@ class UserRepositoryAdapter implements UserRepository {
     public boolean existsByEmail(String email) {
         return jpa.existsByEmail(email);
     }
+
+    @Override
+    public long count() {
+        return jpa.count();
+    }
 }

@@ -2,6 +2,8 @@ package com.timekeeping.domain.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,17 +31,22 @@ public class User {
     @Column(nullable = false)
     private String department;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     protected User() {
     }
 
-    public User(String name, String email, String encodedPassword, String department) {
+    public User(String name, String email, String encodedPassword, String department, Role role) {
         this.name       = name;
         this.email      = email;
         this.password   = encodedPassword;
         this.department = department != null ? department : "General";
+        this.role       = role;
         this.createdAt  = LocalDateTime.now();
     }
 
@@ -48,5 +55,6 @@ public class User {
     public String getEmail()        { return email; }
     public String getPassword()     { return password; }
     public String getDepartment()   { return department; }
+    public Role getRole()           { return role; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

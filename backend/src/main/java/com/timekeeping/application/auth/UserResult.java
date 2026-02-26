@@ -1,5 +1,6 @@
 package com.timekeeping.application.auth;
 
+import com.timekeeping.domain.user.Role;
 import com.timekeeping.domain.user.User;
 
 /**
@@ -9,9 +10,10 @@ public record UserResult(
         String id,
         String name,
         String email,
-        String department
+        String department,
+        Role role
 ) {
     public static UserResult from(User user) {
-        return new UserResult(user.getId(), user.getName(), user.getEmail(), user.getDepartment());
+        return new UserResult(user.getId(), user.getName(), user.getEmail(), user.getDepartment(), user.getRole());
     }
 }

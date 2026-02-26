@@ -73,6 +73,45 @@ class TimeLogServiceImpl implements TimeLogService {
     }
 
     @Override
+    public TimeLogResult timeInCustom(String userId, LocalDateTime dateTime, String timezone) {
+        var date = dateTime.toLocalDate();
+
+        timeLogRepository.findByUserIdAndDate(userId, date).ifPresent(existing -> {
+            if (existing.hasTimedIn()) {
+                throw new BusinessRuleException("You have already timed in for this date");
+            }
+        });
+
+        var timeLog   = TimeLog.createTimeInAt(userId, date, dateTime, timezone);
+        var savedLog  = timeLogRepository.save(timeLog);
+
+        eventPublisher.publishEvent(
+                new TimeInRecordedEvent(this, userId, savedLog.getId(), savedLog.getTimeIn()));
+
+        return TimeLogResult.from(savedLog);
+    }
+
+    @Override
+    public TimeLogResult timeOutCustom(String userId, LocalDateTime dateTime, String timezone) {
+        var date    = dateTime.toLocalDate();
+        var timeLog = timeLogRepository.findByUserIdAndDate(userId, date)
+                .orElseThrow(() -> new BusinessRuleException("No time-in record found for this date"));
+
+        if (timeLog.hasTimedOut()) {
+            throw new BusinessRuleException("You have already timed out for this date");
+        }
+
+        timeLog.recordTimeOutAt(dateTime);
+        var savedLog = timeLogRepository.save(timeLog);
+
+        eventPublisher.publishEvent(new TimeOutRecordedEvent(
+                this, userId, savedLog.getId(),
+                savedLog.getTimeOut(), savedLog.getHoursWorked(), savedLog.getStatus()));
+
+        return TimeLogResult.from(savedLog);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Optional<TimeLogResult> getDailyLog(String userId, String date) {
         var logDate = date != null ? LocalDate.parse(date) : LocalDate.now();

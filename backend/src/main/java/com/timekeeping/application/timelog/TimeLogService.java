@@ -1,5 +1,6 @@
 package com.timekeeping.application.timelog;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,6 +12,10 @@ public interface TimeLogService {
     TimeLogResult timeIn(String userId);
 
     TimeLogResult timeOut(String userId);
+
+    TimeLogResult timeInCustom(String userId, LocalDateTime dateTime, String timezone);
+
+    TimeLogResult timeOutCustom(String userId, LocalDateTime dateTime, String timezone);
 
     Optional<TimeLogResult> getDailyLog(String userId, String date);
 

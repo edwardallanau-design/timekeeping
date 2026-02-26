@@ -42,6 +42,9 @@ public class TimeLog {
 
     private String notes;
 
+    @Column
+    private String timezone;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -55,6 +58,18 @@ public class TimeLog {
         log.timeIn     = timeIn;
         log.hoursWorked = 0.0;
         log.status     = AttendanceStatus.ABSENT;
+        log.createdAt  = LocalDateTime.now();
+        return log;
+    }
+
+    public static TimeLog createTimeInAt(String userId, LocalDate date, LocalDateTime timeIn, String timezone) {
+        var log = new TimeLog();
+        log.userId     = userId;
+        log.date       = date;
+        log.timeIn     = timeIn;
+        log.hoursWorked = 0.0;
+        log.status     = AttendanceStatus.ABSENT;
+        log.timezone   = timezone;
         log.createdAt  = LocalDateTime.now();
         return log;
     }
@@ -73,6 +88,14 @@ public class TimeLog {
         this.status      = AttendanceStatus.fromHoursWorked(hours);
     }
 
+    /**
+     * Records a custom time-out at a specific datetime (for developer testing).
+     * Same logic as recordTimeOut() but accepts the datetime explicitly.
+     */
+    public void recordTimeOutAt(LocalDateTime customTimeOut) {
+        recordTimeOut(customTimeOut);
+    }
+
     public boolean hasTimedIn()  { return timeIn != null; }
     public boolean hasTimedOut() { return timeOut != null; }
 
@@ -84,5 +107,6 @@ public class TimeLog {
     public double getHoursWorked()     { return hoursWorked; }
     public AttendanceStatus getStatus(){ return status; }
     public String getNotes()           { return notes; }
+    public String getTimezone()        { return timezone; }
     public LocalDateTime getCreatedAt(){ return createdAt; }
 }

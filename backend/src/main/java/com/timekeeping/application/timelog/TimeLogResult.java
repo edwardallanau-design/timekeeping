@@ -17,7 +17,8 @@ public record TimeLogResult(
         LocalDateTime timeOut,
         double hoursWorked,
         AttendanceStatus status,
-        String notes
+        String notes,
+        String timezone
 ) {
     public static TimeLogResult from(TimeLog timeLog) {
         return new TimeLogResult(
@@ -28,7 +29,8 @@ public record TimeLogResult(
                 timeLog.getTimeOut(),
                 timeLog.getHoursWorked(),
                 timeLog.getStatus(),
-                timeLog.getNotes()
+                timeLog.getNotes(),
+                timeLog.getTimezone()
         );
     }
 }

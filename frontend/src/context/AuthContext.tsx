@@ -76,6 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     loading,
     isAuthenticated: !!token,
+    isDeveloper: user?.role === 'DEVELOPER',
   };
 
   return (

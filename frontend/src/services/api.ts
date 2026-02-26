@@ -8,6 +8,7 @@ import type {
   DailyLogResponse,
   MonthlyAttendanceResponse,
   MeResponse,
+  DevTimeRequest,
 } from '../types';
 
 const API_URL = 'http://localhost:5000/api';
@@ -44,6 +45,12 @@ export const timeLogService = {
 
   timeOut: () =>
     api.post<TimeLogDto>('/timelog/time-out'),
+
+  timeInCustom: (data: DevTimeRequest) =>
+    api.post<TimeLogDto>('/dev/timelog/time-in', data),
+
+  timeOutCustom: (data: DevTimeRequest) =>
+    api.post<TimeLogDto>('/dev/timelog/time-out', data),
 
   getDailyLog: (date?: string) =>
     api.get<DailyLogResponse>('/timelog/daily', { params: { date } }),

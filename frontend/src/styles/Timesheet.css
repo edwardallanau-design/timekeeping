@@ -269,3 +269,141 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
 }
+
+/* Developer Panel Styles */
+.dev-clocks {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+.analog-clock-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.clock-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+  text-align: center;
+}
+
+.dev-panel {
+  border-left: 4px solid #ffc107;
+  background: #fffbf0;
+  padding: 20px;
+  border-radius: 5px;
+  margin-top: 25px;
+}
+
+.dev-badge {
+  display: inline-block;
+  background: #ffc107;
+  color: #333;
+  padding: 4px 12px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dev-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.dev-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dev-form-group label {
+  color: #333;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.dev-select,
+.dev-input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  background: white;
+  color: #333;
+  transition: border-color 0.3s;
+}
+
+.dev-select:focus,
+.dev-input:focus {
+  outline: none;
+  border-color: #ffc107;
+  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.1);
+}
+
+.dev-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.btn-dev-in,
+.btn-dev-out {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-dev-in {
+  background: #ffc107;
+  color: #333;
+}
+
+.btn-dev-in:hover:not(:disabled) {
+  background: #ffb300;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.btn-dev-out {
+  background: #ff9800;
+  color: white;
+}
+
+.btn-dev-out:hover:not(:disabled) {
+  background: #e68900;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
+}
+
+.btn-dev-in:disabled,
+.btn-dev-out:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .dev-clocks {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .dev-buttons {
+    grid-template-columns: 1fr;
+  }
+}
