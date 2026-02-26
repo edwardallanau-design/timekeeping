@@ -1,0 +1,200 @@
+/* Date Details Panel Styles */
+.details-panel {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.details-panel.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #999;
+  font-size: 14px;
+  text-align: center;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  background: #f9f9f9;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.panel-date {
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.panel-loading,
+.panel-error {
+  padding: 20px;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel-loading {
+  color: #667eea;
+}
+
+.panel-error {
+  color: #dc3545;
+  font-size: 14px;
+}
+
+.panel-empty {
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}
+
+.time-details {
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.time-detail-item {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.time-detail-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.time-detail-item.notes {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.time-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.time-label svg {
+  color: #667eea;
+}
+
+.time-value {
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.time-value.not-clocked {
+  color: #999;
+  font-style: italic;
+}
+
+.time-value.status-present {
+  color: #28a745;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+.time-value.status-half-day {
+  color: #ffc107;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+.time-value.status-absent {
+  color: #dc3545;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 14px;
+}
+
+@media (max-width: 1024px) {
+  .details-panel {
+    height: auto;
+    max-height: 400px;
+  }
+
+  .time-details {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .details-panel {
+    max-height: none;
+  }
+
+  .panel-header {
+    padding: 15px;
+  }
+
+  .panel-header h3 {
+    font-size: 14px;
+  }
+
+  .time-details {
+    padding: 15px;
+  }
+
+  .time-detail-item {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+  }
+
+  .time-label {
+    font-size: 11px;
+  }
+
+  .time-value {
+    font-size: 14px;
+  }
+}

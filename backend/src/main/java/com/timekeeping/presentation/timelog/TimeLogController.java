@@ -11,9 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.Map;
 
 /**
  * Time-log endpoints. All business logic is delegated to {@link TimeLogService}.
@@ -30,14 +32,22 @@ public class TimeLogController {
     }
 
     @PostMapping("/time-in")
-    public ResponseEntity<TimeLogDto> timeIn(@AuthenticationPrincipal UserPrincipal principal) {
-        var result = timeLogService.timeIn(principal.getId());
+    public ResponseEntity<TimeLogDto> timeIn(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestBody(required = false) Map<String, String> body) {
+        String timezone = body != null ? body.get("timezone") : null;
+        String dateTime = body != null ? body.get("dateTime") : null;
+        var result = timeLogService.timeIn(principal.getId(), dateTime, timezone);
         return ResponseEntity.status(HttpStatus.CREATED).body(TimeLogDto.from(result));
     }
 
     @PostMapping("/time-out")
-    public ResponseEntity<TimeLogDto> timeOut(@AuthenticationPrincipal UserPrincipal principal) {
-        var result = timeLogService.timeOut(principal.getId());
+    public ResponseEntity<TimeLogDto> timeOut(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestBody(required = false) Map<String, String> body) {
+        String timezone = body != null ? body.get("timezone") : null;
+        String dateTime = body != null ? body.get("dateTime") : null;
+        var result = timeLogService.timeOut(principal.getId(), dateTime, timezone);
         return ResponseEntity.ok(TimeLogDto.from(result));
     }
 

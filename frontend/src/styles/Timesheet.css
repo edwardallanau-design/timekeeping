@@ -270,6 +270,37 @@
   box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
 }
 
+.btn-delete {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-delete:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.delete-modal {
+  border-left: 4px solid #dc3545;
+}
+
+.delete-warning {
+  color: #333;
+  font-size: 16px;
+  margin-bottom: 15px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.delete-note {
+  color: #dc3545;
+  font-size: 13px;
+  text-align: center;
+  font-style: italic;
+  margin: 0;
+}
+
 /* Developer Panel Styles */
 .dev-clocks {
   display: flex;
@@ -353,13 +384,14 @@
 
 .dev-buttons {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 12px;
   margin-top: 10px;
 }
 
 .btn-dev-in,
-.btn-dev-out {
+.btn-dev-out,
+.btn-dev-delete {
   padding: 10px 16px;
   border: none;
   border-radius: 4px;
@@ -391,10 +423,28 @@
   box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
 }
 
+.btn-dev-delete {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-dev-delete:hover:not(:disabled) {
+  background: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
 .btn-dev-in:disabled,
-.btn-dev-out:disabled {
+.btn-dev-out:disabled,
+.btn-dev-delete:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .dev-buttons {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 480px) {

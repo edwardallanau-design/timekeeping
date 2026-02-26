@@ -73,17 +73,71 @@ class TimeLogServiceImpl implements TimeLogService {
     }
 
     @Override
-    public TimeLogResult timeInCustom(String userId, LocalDateTime dateTime, String timezone) {
-        var date = dateTime.toLocalDate();
+    public TimeLogResult timeIn(String userId, String dateTime, String timezone) {
+        LocalDateTime timeInValue = dateTime != null ? LocalDateTime.parse(dateTime) : LocalDateTime.now();
+        LocalDate today = timeInValue.toLocalDate();
 
-        timeLogRepository.findByUserIdAndDate(userId, date).ifPresent(existing -> {
+        timeLogRepository.findByUserIdAndDate(userId, today).ifPresent(existing -> {
             if (existing.hasTimedIn()) {
-                throw new BusinessRuleException("You have already timed in for this date");
+                throw new BusinessRuleException("You have already timed in today");
             }
         });
 
-        var timeLog   = TimeLog.createTimeInAt(userId, date, dateTime, timezone);
-        var savedLog  = timeLogRepository.save(timeLog);
+        var timeLog = TimeLog.createTimeIn(userId, today, timeInValue);
+        if (timezone != null) {
+            timeLog.setTimezone(timezone);
+        }
+        var savedLog = timeLogRepository.save(timeLog);
+
+        eventPublisher.publishEvent(
+                new TimeInRecordedEvent(this, userId, savedLog.getId(), savedLog.getTimeIn()));
+
+        return TimeLogResult.from(savedLog);
+    }
+
+    @Override
+    public TimeLogResult timeOut(String userId, String dateTime, String timezone) {
+        LocalDateTime timeOutValue = dateTime != null ? LocalDateTime.parse(dateTime) : LocalDateTime.now();
+        LocalDate today = timeOutValue.toLocalDate();
+        var timeLog = timeLogRepository.findByUserIdAndDate(userId, today)
+                .orElseThrow(() -> new BusinessRuleException("No time-in record found for today"));
+
+        if (timeLog.hasTimedOut()) {
+            throw new BusinessRuleException("You have already timed out today");
+        }
+
+        timeLog.recordTimeOut(timeOutValue);
+        if (timezone != null) {
+            timeLog.setTimezone(timezone);
+        }
+        var savedLog = timeLogRepository.save(timeLog);
+
+        eventPublisher.publishEvent(new TimeOutRecordedEvent(
+                this, userId, savedLog.getId(),
+                savedLog.getTimeOut(), savedLog.getHoursWorked(), savedLog.getStatus()));
+
+        return TimeLogResult.from(savedLog);
+    }
+
+    @Override
+    public TimeLogResult timeInCustom(String userId, LocalDateTime dateTime, String timezone) {
+        var date = dateTime.toLocalDate();
+
+        // Allow overwriting: if a log exists for this date, update its time-in
+        var existing = timeLogRepository.findByUserIdAndDate(userId, date);
+        TimeLog timeLog;
+
+        if (existing.isPresent()) {
+            // Update existing log's time-in
+            timeLog = existing.get();
+            timeLog.setTimeIn(dateTime);
+            timeLog.setTimezone(timezone);
+        } else {
+            // Create new log
+            timeLog = TimeLog.createTimeInAt(userId, date, dateTime, timezone);
+        }
+
+        var savedLog = timeLogRepository.save(timeLog);
 
         eventPublisher.publishEvent(
                 new TimeInRecordedEvent(this, userId, savedLog.getId(), savedLog.getTimeIn()));
@@ -97,10 +151,7 @@ class TimeLogServiceImpl implements TimeLogService {
         var timeLog = timeLogRepository.findByUserIdAndDate(userId, date)
                 .orElseThrow(() -> new BusinessRuleException("No time-in record found for this date"));
 
-        if (timeLog.hasTimedOut()) {
-            throw new BusinessRuleException("You have already timed out for this date");
-        }
-
+        // Allow overwriting: always update time-out (even if one exists)
         timeLog.recordTimeOutAt(dateTime);
         var savedLog = timeLogRepository.save(timeLog);
 
@@ -109,6 +160,15 @@ class TimeLogServiceImpl implements TimeLogService {
                 savedLog.getTimeOut(), savedLog.getHoursWorked(), savedLog.getStatus()));
 
         return TimeLogResult.from(savedLog);
+    }
+
+    @Override
+    public void deleteTimeLog(String userId, String date) {
+        var logDate = LocalDate.parse(date);
+        var timeLog = timeLogRepository.findByUserIdAndDate(userId, logDate)
+                .orElseThrow(() -> new BusinessRuleException("No time log found for this date"));
+
+        timeLogRepository.delete(timeLog);
     }
 
     @Override

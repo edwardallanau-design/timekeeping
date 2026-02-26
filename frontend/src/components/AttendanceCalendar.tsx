@@ -21,7 +21,11 @@ function statusLabel(status: AttendanceStatus): string {
   return labels[status] ?? status;
 }
 
-function AttendanceCalendar({ refreshTrigger }: AttendanceCalendarProps) {
+interface AttendanceCalendarExtendedProps extends AttendanceCalendarProps {
+  onDateSelected?: (date: string) => void;
+}
+
+function AttendanceCalendar({ refreshTrigger, onDateSelected }: AttendanceCalendarExtendedProps) {
   const { user, loading } = useAuth();
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [logs, setLogs]               = useState<AttendanceLog[]>([]);
@@ -64,6 +68,17 @@ function AttendanceCalendar({ refreshTrigger }: AttendanceCalendarProps) {
   const nextMonth = (): void =>
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
 
+  const handleDayClick = (day: number): void => {
+    if (onDateSelected) {
+      // Format date as YYYY-MM-DD in local timezone (not UTC)
+      const year = currentDate.getFullYear();
+      const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const dayStr = String(day).padStart(2, '0');
+      const dateString = `${year}-${month}-${dayStr}`;
+      onDateSelected(dateString);
+    }
+  };
+
   const monthName   = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
   const daysInMonth = getDaysInMonth(currentDate);
   const firstDay    = getFirstDayOfMonth(currentDate);
@@ -89,9 +104,22 @@ function AttendanceCalendar({ refreshTrigger }: AttendanceCalendarProps) {
         {calendarDays.map((day, index) => {
           const log      = day !== null ? getLogForDay(day) : undefined;
           const cssClass = log ? statusToClass(log.status) : 'none';
+          const isClickable = day !== null && onDateSelected;
 
           return (
-            <div key={index} className={`calendar-day ${cssClass}`}>
+            <div
+              key={index}
+              className={`calendar-day ${cssClass} ${isClickable ? 'clickable' : ''}`}
+              onClick={() => day !== null && handleDayClick(day)}
+              role={day !== null ? 'button' : undefined}
+              tabIndex={day !== null ? 0 : undefined}
+              onKeyDown={(e) => {
+                if (day !== null && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  handleDayClick(day);
+                }
+              }}
+            >
               {day !== null && (
                 <>
                   <div className="day-number">{day}</div>

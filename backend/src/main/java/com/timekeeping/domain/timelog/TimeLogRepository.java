@@ -12,6 +12,8 @@ public interface TimeLogRepository {
 
     TimeLog save(TimeLog timeLog);
 
+    void delete(TimeLog timeLog);
+
     Optional<TimeLog> findByUserIdAndDate(String userId, LocalDate date);
 
     List<TimeLog> findByUserIdAndDateBetween(String userId, LocalDate startInclusive, LocalDate endExclusive);

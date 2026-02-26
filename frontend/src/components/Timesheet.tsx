@@ -32,6 +32,9 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
   const [customDateTime, setCustomDateTime] = useState<string>('');
+  const [usedDevMode, setUsedDevMode] = useState<boolean | null>(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
+  const [dateToDelete, setDateToDelete] = useState<string>('');
 
   useEffect(() => {
     if (!loading && user?.id) {
@@ -52,8 +55,23 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
   const handleTimeIn = async (): Promise<void> => {
     setIsFetching(true);
     try {
-      const response = await timeLogService.timeIn();
+      // Get user's local timezone and current local time
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const dateTimeString = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+
+      const response = await timeLogService.timeInWithDateTime({
+        dateTime: dateTimeString,
+        timezone: userTimezone,
+      });
       setTodayLog(response.data);
+      setUsedDevMode(false);
       setMessage('Time in recorded successfully!');
       onTimeLogUpdate();
       setTimeout(() => setMessage(''), 3000);
@@ -85,8 +103,23 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
     setShowConfirmation(false);
     setIsFetching(true);
     try {
-      const response = await timeLogService.timeOut();
+      // Get user's local timezone and current local time
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const dateTimeString = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+
+      const response = await timeLogService.timeOutWithDateTime({
+        dateTime: dateTimeString,
+        timezone: userTimezone,
+      });
       setTodayLog(response.data);
+      setUsedDevMode(null);
       setMessage('Time out recorded successfully!');
       onTimeLogUpdate();
       setConfirmationData(null);
@@ -107,6 +140,44 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
     setConfirmationData(null);
   };
 
+  const handleDeleteTimeLog = (): void => {
+    if (!customDateTime) {
+      setMessage('Please select a date to delete');
+      return;
+    }
+
+    // Extract date from customDateTime (format: "YYYY-MM-DDTHH:mm")
+    const date = customDateTime.substring(0, 10);
+    setDateToDelete(date);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDeleteTimeLog = async (): Promise<void> => {
+    setShowDeleteConfirmation(false);
+    setIsFetching(true);
+    try {
+      await timeLogService.deleteTimeLog(dateToDelete);
+      setMessage('Time log deleted successfully!');
+      setCustomDateTime('');
+      setDateToDelete('');
+      onTimeLogUpdate();
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setMessage((err.response?.data as { message?: string })?.message ?? 'Error deleting time log');
+      } else {
+        setMessage('Error deleting time log');
+      }
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  const cancelDeleteTimeLog = (): void => {
+    setShowDeleteConfirmation(false);
+    setDateToDelete('');
+  };
+
   const handleDevTimeIn = async (): Promise<void> => {
     if (!customDateTime) {
       setMessage('Please select a date and time');
@@ -115,12 +186,15 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
 
     setIsFetching(true);
     try {
+      // Format datetime directly without UTC conversion to preserve local timezone
+      const dateTimeFormatted = customDateTime.length === 16 ? `${customDateTime}:00` : customDateTime;
       const request: DevTimeRequest = {
-        dateTime: new Date(customDateTime).toISOString().slice(0, 19),
+        dateTime: dateTimeFormatted,
         timezone: selectedTimezone,
       };
       const response = await timeLogService.timeInCustom(request);
       setTodayLog(response.data);
+      setUsedDevMode(true);
       setMessage('Dev Time In recorded successfully!');
       setCustomDateTime('');
       onTimeLogUpdate();
@@ -144,12 +218,15 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
 
     setIsFetching(true);
     try {
+      // Format datetime directly without UTC conversion to preserve local timezone
+      const dateTimeFormatted = customDateTime.length === 16 ? `${customDateTime}:00` : customDateTime;
       const request: DevTimeRequest = {
-        dateTime: new Date(customDateTime).toISOString().slice(0, 19),
+        dateTime: dateTimeFormatted,
         timezone: selectedTimezone,
       };
       const response = await timeLogService.timeOutCustom(request);
       setTodayLog(response.data);
+      setUsedDevMode(null);
       setMessage('Dev Time Out recorded successfully!');
       setCustomDateTime('');
       onTimeLogUpdate();
@@ -199,15 +276,17 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
           <div className="button-group">
             <button
               onClick={handleTimeIn}
-              disabled={isFetching || (todayLog !== null && !!todayLog.timeIn && !todayLog.timeOut)}
+              disabled={isFetching || usedDevMode === true || (todayLog !== null && !!todayLog.timeIn && !todayLog.timeOut)}
               className="btn btn-primary"
+              title={usedDevMode === true ? 'Use Dev Time Out to complete dev mode shift' : ''}
             >
               {isFetching ? 'Processing...' : 'Time In'}
             </button>
             <button
               onClick={handleTimeOut}
-              disabled={isFetching || todayLog === null || !!todayLog.timeOut}
+              disabled={isFetching || usedDevMode === true || todayLog === null || !!todayLog.timeOut}
               className="btn btn-danger"
+              title={usedDevMode === true ? 'Use Dev Time Out to complete dev mode shift' : ''}
             >
               {isFetching ? 'Processing...' : 'Time Out'}
             </button>
@@ -257,6 +336,13 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
                   >
                     {isFetching ? 'Processing...' : '[Dev Time Out]'}
                   </button>
+                  <button
+                    onClick={handleDeleteTimeLog}
+                    disabled={isFetching || !customDateTime}
+                    className="btn btn-dev-delete"
+                  >
+                    {isFetching ? 'Processing...' : '[Delete]'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -286,6 +372,26 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
             <div className="modal-buttons">
               <button onClick={confirmTimeOut} className="btn-confirm">Confirm</button>
               <button onClick={cancelTimeOut}  className="btn-cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirmation && (
+        <div className="modal-overlay">
+          <div className="confirmation-modal delete-modal">
+            <h3>Delete Time Log</h3>
+            <div className="confirmation-content">
+              <p className="delete-warning">
+                Are you sure you want to delete the time log for <strong>{dateToDelete}</strong>?
+              </p>
+              <p className="delete-note">
+                This action cannot be undone.
+              </p>
+            </div>
+            <div className="modal-buttons">
+              <button onClick={confirmDeleteTimeLog} className="btn-delete">Delete</button>
+              <button onClick={cancelDeleteTimeLog} className="btn-cancel">Cancel</button>
             </div>
           </div>
         </div>

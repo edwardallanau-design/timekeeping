@@ -11,11 +11,17 @@ public interface TimeLogService {
 
     TimeLogResult timeIn(String userId);
 
+    TimeLogResult timeIn(String userId, String dateTime, String timezone);
+
     TimeLogResult timeOut(String userId);
+
+    TimeLogResult timeOut(String userId, String dateTime, String timezone);
 
     TimeLogResult timeInCustom(String userId, LocalDateTime dateTime, String timezone);
 
     TimeLogResult timeOutCustom(String userId, LocalDateTime dateTime, String timezone);
+
+    void deleteTimeLog(String userId, String date);
 
     Optional<TimeLogResult> getDailyLog(String userId, String date);
 

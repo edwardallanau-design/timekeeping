@@ -27,6 +27,11 @@ class TimeLogRepositoryAdapter implements TimeLogRepository {
     }
 
     @Override
+    public void delete(TimeLog timeLog) {
+        jpa.delete(timeLog);
+    }
+
+    @Override
     public Optional<TimeLog> findByUserIdAndDate(String userId, LocalDate date) {
         return jpa.findByUserIdAndDate(userId, date);
     }

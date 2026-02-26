@@ -43,14 +43,29 @@ export const timeLogService = {
   timeIn: () =>
     api.post<TimeLogDto>('/timelog/time-in'),
 
+  timeInWithTimezone: (timezone: string) =>
+    api.post<TimeLogDto>('/timelog/time-in', { timezone }),
+
+  timeInWithDateTime: (data: DevTimeRequest) =>
+    api.post<TimeLogDto>('/timelog/time-in', data),
+
   timeOut: () =>
     api.post<TimeLogDto>('/timelog/time-out'),
+
+  timeOutWithTimezone: (timezone: string) =>
+    api.post<TimeLogDto>('/timelog/time-out', { timezone }),
+
+  timeOutWithDateTime: (data: DevTimeRequest) =>
+    api.post<TimeLogDto>('/timelog/time-out', data),
 
   timeInCustom: (data: DevTimeRequest) =>
     api.post<TimeLogDto>('/dev/timelog/time-in', data),
 
   timeOutCustom: (data: DevTimeRequest) =>
     api.post<TimeLogDto>('/dev/timelog/time-out', data),
+
+  deleteTimeLog: (date: string) =>
+    api.delete<void>(`/dev/timelog/${date}`),
 
   getDailyLog: (date?: string) =>
     api.get<DailyLogResponse>('/timelog/daily', { params: { date } }),
