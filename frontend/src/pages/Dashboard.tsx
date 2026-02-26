@@ -1,14 +1,14 @@
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import Timesheet from '../components/Timesheet';
 import AttendanceCalendar from '../components/AttendanceCalendar';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import '../styles/Dashboard.css';
 
-const Dashboard = () => {
-  const { loading } = useContext(AuthContext);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+function Dashboard() {
+  const { loading } = useAuth();
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
-  const handleTimeLogUpdate = () => {
+  const handleTimeLogUpdate = (): void => {
     setRefreshTrigger(prev => prev + 1);
   };
 
@@ -31,6 +31,6 @@ const Dashboard = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Dashboard;

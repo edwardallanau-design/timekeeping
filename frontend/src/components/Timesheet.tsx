@@ -1,25 +1,28 @@
-import { useState, useContext, useEffect } from 'react';
-import { AuthContext } from '../context/AuthContext';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { timeLogService } from '../services/api';
 import { LogOut } from 'lucide-react';
 import AnalogClock from './AnalogClock';
+import type { TimeLogDto, TimesheetProps, ConfirmationData } from '../types';
+import axios from 'axios';
 import '../styles/Timesheet.css';
 
-const Timesheet = ({ onTimeLogUpdate }) => {
-  const { user, logout, loading } = useContext(AuthContext);
-  const [todayLog, setTodayLog] = useState(null);
-  const [isFetching, setIsFetching] = useState(false);
-  const [message, setMessage] = useState('');
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [confirmationData, setConfirmationData] = useState(null);
+function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
+  const { user, logout, loading } = useAuth();
+  const [todayLog, setTodayLog]             = useState<TimeLogDto | null>(null);
+  const [isFetching, setIsFetching]         = useState<boolean>(false);
+  const [message, setMessage]               = useState<string>('');
+  const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
+  const [confirmationData, setConfirmationData] = useState<ConfirmationData | null>(null);
 
   useEffect(() => {
     if (!loading && user?.id) {
       fetchTodayLog();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user?.id]);
 
-  const fetchTodayLog = async () => {
+  const fetchTodayLog = async (): Promise<void> => {
     try {
       const response = await timeLogService.getDailyLog();
       setTodayLog(response.data.timeLog);
@@ -28,60 +31,65 @@ const Timesheet = ({ onTimeLogUpdate }) => {
     }
   };
 
-  const handleTimeIn = async () => {
+  const handleTimeIn = async (): Promise<void> => {
     setIsFetching(true);
     try {
-      // timeIn now returns TimeLogDto directly
       const response = await timeLogService.timeIn();
       setTodayLog(response.data);
       setMessage('Time in recorded successfully!');
-      onTimeLogUpdate?.();
+      onTimeLogUpdate();
       setTimeout(() => setMessage(''), 3000);
-    } catch (error) {
-      setMessage(error.response?.data?.message || 'Error recording time in');
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setMessage((err.response?.data as { message?: string })?.message ?? 'Error recording time in');
+      } else {
+        setMessage('Error recording time in');
+      }
     } finally {
       setIsFetching(false);
     }
   };
 
-  const handleTimeOut = async () => {
+  const handleTimeOut = (): void => {
     if (!todayLog) return;
 
-    const timeInDate  = new Date(todayLog.timeIn);
-    const timeOutDate = new Date();
-    const diffMs      = timeOutDate - timeInDate;
+    const timeInMs    = new Date(todayLog.timeIn).getTime();
+    const timeOutMs   = Date.now();
+    const diffMs      = timeOutMs - timeInMs;
     const hoursWorked = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100;
-
-    const status = hoursWorked < 8 ? 'half-day' : 'present';
+    const status: ConfirmationData['status'] = hoursWorked < 8 ? 'half-day' : 'present';
 
     setConfirmationData({ hoursWorked, status });
     setShowConfirmation(true);
   };
 
-  const confirmTimeOut = async () => {
+  const confirmTimeOut = async (): Promise<void> => {
     setShowConfirmation(false);
     setIsFetching(true);
     try {
-      // timeOut now returns TimeLogDto directly
       const response = await timeLogService.timeOut();
       setTodayLog(response.data);
       setMessage('Time out recorded successfully!');
-      onTimeLogUpdate?.();
+      onTimeLogUpdate();
       setConfirmationData(null);
       setTimeout(() => setMessage(''), 3000);
-    } catch (error) {
-      setMessage(error.response?.data?.message || 'Error recording time out');
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setMessage((err.response?.data as { message?: string })?.message ?? 'Error recording time out');
+      } else {
+        setMessage('Error recording time out');
+      }
     } finally {
       setIsFetching(false);
     }
   };
 
-  const cancelTimeOut = () => {
+  const cancelTimeOut = (): void => {
     setShowConfirmation(false);
     setConfirmationData(null);
   };
 
-  const formatTime = (date) => new Date(date).toLocaleTimeString();
+  const formatTime = (dateStr: string): string => new Date(dateStr).toLocaleTimeString();
 
   return (
     <div className="timesheet-container">
@@ -108,14 +116,14 @@ const Timesheet = ({ onTimeLogUpdate }) => {
           <div className="button-group">
             <button
               onClick={handleTimeIn}
-              disabled={isFetching || (todayLog && todayLog.timeIn && !todayLog.timeOut)}
+              disabled={isFetching || (todayLog !== null && !!todayLog.timeIn && !todayLog.timeOut)}
               className="btn btn-primary"
             >
               {isFetching ? 'Processing...' : 'Time In'}
             </button>
             <button
               onClick={handleTimeOut}
-              disabled={isFetching || !todayLog || todayLog.timeOut}
+              disabled={isFetching || todayLog === null || !!todayLog.timeOut}
               className="btn btn-danger"
             >
               {isFetching ? 'Processing...' : 'Time Out'}
@@ -152,6 +160,6 @@ const Timesheet = ({ onTimeLogUpdate }) => {
       )}
     </div>
   );
-};
+}
 
 export default Timesheet;

@@ -1,26 +1,32 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/api';
+import type { RegisterRequest } from '../types';
+import axios from 'axios';
 import '../styles/Auth.css';
 
-const Register = () => {
-  const [formData, setFormData] = useState({
+function Register() {
+  const [formData, setFormData] = useState<RegisterRequest>({
     name: '',
     email: '',
     password: '',
-    department: 'General'
+    department: 'General',
   });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const [error, setError]     = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const { login } = useAuth();
+  const navigate  = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name as keyof RegisterRequest]: value,
+    }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -31,7 +37,11 @@ const Register = () => {
       login(user, token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      if (axios.isAxiosError(err)) {
+        setError((err.response?.data as { message?: string })?.message ?? 'Registration failed');
+      } else {
+        setError('Registration failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -42,64 +52,34 @@ const Register = () => {
       <div className="auth-form">
         <h1>Timekeeping System</h1>
         <h2>Register</h2>
-
         {error && <div className="error-message">{error}</div>}
-
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Full Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+            <input type="text"     name="name"       value={formData.name}       onChange={handleChange} required />
           </div>
-
           <div className="form-group">
             <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+            <input type="email"    name="email"      value={formData.email}      onChange={handleChange} required />
           </div>
-
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
+            <input type="password" name="password"   value={formData.password}   onChange={handleChange} required />
           </div>
-
           <div className="form-group">
             <label>Department</label>
-            <input
-              type="text"
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-            />
+            <input type="text"     name="department" value={formData.department} onChange={handleChange} />
           </div>
-
           <button type="submit" disabled={loading}>
             {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
-
         <p className="auth-link">
           Already have an account? <a href="/login">Login here</a>
         </p>
       </div>
     </div>
   );
-};
+}
 
 export default Register;

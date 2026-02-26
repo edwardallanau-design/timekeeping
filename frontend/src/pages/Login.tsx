@@ -1,18 +1,19 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/api';
+import axios from 'axios';
 import '../styles/Auth.css';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
+function Login() {
+  const [email, setEmail]       = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [error, setError]       = useState<string>('');
+  const [loading, setLoading]   = useState<boolean>(false);
+  const { login } = useAuth();
+  const navigate  = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -23,7 +24,11 @@ const Login = () => {
       login(user, token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      if (axios.isAxiosError(err)) {
+        setError((err.response?.data as { message?: string })?.message ?? 'Login failed');
+      } else {
+        setError('Login failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -47,7 +52,6 @@ const Login = () => {
               required
             />
           </div>
-
           <div className="form-group">
             <label>Password</label>
             <input
@@ -57,7 +61,6 @@ const Login = () => {
               required
             />
           </div>
-
           <button type="submit" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
@@ -69,6 +72,6 @@ const Login = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Login;

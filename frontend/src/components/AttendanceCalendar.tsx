@@ -1,34 +1,40 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { timeLogService } from '../services/api';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import type { AttendanceLog, AttendanceCalendarProps, AttendanceStatus } from '../types';
 import '../styles/AttendanceCalendar.css';
 
 /** Converts backend enum (e.g. HALF_DAY) to a CSS-friendly class (e.g. half-day) */
-const statusToClass = (status) => {
+function statusToClass(status: AttendanceStatus | undefined): string {
   if (!status) return 'none';
   return status.toLowerCase().replace('_', '-');
-};
+}
 
 /** Human-readable label for display */
-const statusLabel = (status) => {
-  const labels = { PRESENT: 'Present', HALF_DAY: 'Half Day', ABSENT: 'Absent' };
+function statusLabel(status: AttendanceStatus): string {
+  const labels: Record<AttendanceStatus, string> = {
+    PRESENT:  'Present',
+    HALF_DAY: 'Half Day',
+    ABSENT:   'Absent',
+  };
   return labels[status] ?? status;
-};
+}
 
-const AttendanceCalendar = ({ refreshTrigger }) => {
-  const { user, loading } = useContext(AuthContext);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [logs, setLogs] = useState([]);
-  const [isFetching, setIsFetching] = useState(false);
+function AttendanceCalendar({ refreshTrigger }: AttendanceCalendarProps) {
+  const { user, loading } = useAuth();
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [logs, setLogs]               = useState<AttendanceLog[]>([]);
+  const [isFetching, setIsFetching]   = useState<boolean>(false);
 
   useEffect(() => {
     if (!loading && user?.id) {
       fetchMonthlyLogs();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate, loading, user?.id, refreshTrigger]);
 
-  const fetchMonthlyLogs = async () => {
+  const fetchMonthlyLogs = async (): Promise<void> => {
     if (!user?.id || loading) return;
     setIsFetching(true);
     try {
@@ -43,28 +49,28 @@ const AttendanceCalendar = ({ refreshTrigger }) => {
     }
   };
 
-  const getDaysInMonth = (date) =>
+  const getDaysInMonth = (date: Date): number =>
     new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 
-  const getFirstDayOfMonth = (date) =>
+  const getFirstDayOfMonth = (date: Date): number =>
     new Date(date.getFullYear(), date.getMonth(), 1).getDay();
 
-  const getLogForDay = (day) =>
+  const getLogForDay = (day: number): AttendanceLog | undefined =>
     logs.find(log => new Date(log.date + 'T00:00:00').getDate() === day);
 
-  const previousMonth = () =>
+  const previousMonth = (): void =>
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
 
-  const nextMonth = () =>
+  const nextMonth = (): void =>
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
 
-  const monthName    = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-  const daysInMonth  = getDaysInMonth(currentDate);
-  const firstDay     = getFirstDayOfMonth(currentDate);
+  const monthName   = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const daysInMonth = getDaysInMonth(currentDate);
+  const firstDay    = getFirstDayOfMonth(currentDate);
 
-  const calendarDays = [
-    ...Array(firstDay).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1)
+  const calendarDays: (number | null)[] = [
+    ...Array<null>(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
   return (
@@ -81,12 +87,12 @@ const AttendanceCalendar = ({ refreshTrigger }) => {
 
       <div className="calendar-grid">
         {calendarDays.map((day, index) => {
-          const log        = day ? getLogForDay(day) : null;
-          const cssClass   = log ? statusToClass(log.status) : 'none';
+          const log      = day !== null ? getLogForDay(day) : undefined;
+          const cssClass = log ? statusToClass(log.status) : 'none';
 
           return (
             <div key={index} className={`calendar-day ${cssClass}`}>
-              {day && (
+              {day !== null && (
                 <>
                   <div className="day-number">{day}</div>
                   {log && (
@@ -113,6 +119,6 @@ const AttendanceCalendar = ({ refreshTrigger }) => {
       </div>
     </div>
   );
-};
+}
 
 export default AttendanceCalendar;

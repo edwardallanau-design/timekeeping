@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import '../styles/AnalogClock.css';
 
-const AnalogClock = () => {
-  const [time, setTime] = useState(new Date());
+function AnalogClock() {
+  const [time, setTime] = useState<Date>(new Date());
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -27,6 +27,6 @@ const AnalogClock = () => {
       </div>
     </div>
   );
-};
+}
 
 export default AnalogClock;

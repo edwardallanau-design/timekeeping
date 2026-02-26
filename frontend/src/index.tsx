@@ -4,7 +4,8 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import './App.css';
 
-createRoot(document.getElementById('root')).render(
+const rootElement = document.getElementById('root')!;
+createRoot(rootElement).render(
   <StrictMode>
     <AuthProvider>
       <App />
