@@ -98,10 +98,10 @@ class TimeLogServiceImpl implements TimeLogService {
         var end   = LocalDate.of(year + 1, 1, 1);
         var logs  = timeLogRepository.findByUserIdAndDateBetween(userId, start, end);
 
-        double totalHours  = logs.stream().mapToDouble(TimeLogResult::hoursWorked).sum();
-        long presentDays   = logs.stream().filter(l -> l.status() == AttendanceStatus.PRESENT).count();
-        long halfDays      = logs.stream().filter(l -> l.status() == AttendanceStatus.HALF_DAY).count();
-        long absentDays    = logs.stream().filter(l -> l.status() == AttendanceStatus.ABSENT).count();
+        double totalHours  = logs.stream().mapToDouble(TimeLog::getHoursWorked).sum();
+        long presentDays   = logs.stream().filter(l -> l.getStatus() == AttendanceStatus.PRESENT).count();
+        long halfDays      = logs.stream().filter(l -> l.getStatus() == AttendanceStatus.HALF_DAY).count();
+        long absentDays    = logs.stream().filter(l -> l.getStatus() == AttendanceStatus.ABSENT).count();
 
         return new AttendanceStatsResult(totalHours, presentDays, halfDays, absentDays, logs.size());
     }

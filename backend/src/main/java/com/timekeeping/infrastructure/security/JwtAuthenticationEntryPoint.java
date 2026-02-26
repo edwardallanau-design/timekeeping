@@ -1,6 +1,5 @@
 package com.timekeeping.infrastructure.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Map;
 
 /**
  * Returns a structured JSON 401 response instead of the default HTML error page
@@ -19,12 +17,6 @@ import java.util.Map;
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private final ObjectMapper objectMapper;
-
-    public JwtAuthenticationEntryPoint(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
-
     @Override
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
@@ -32,11 +24,10 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-        var body = Map.of(
-                "status",    401,
-                "message",   "Unauthorized: " + authException.getMessage(),
-                "timestamp", Instant.now().toString()
-        );
-        objectMapper.writeValue(response.getOutputStream(), body);
+        String body = """
+                {"status":401,"message":"Unauthorized: %s","timestamp":"%s"}
+                """.formatted(authException.getMessage(), Instant.now()).strip();
+
+        response.getWriter().write(body);
     }
 }

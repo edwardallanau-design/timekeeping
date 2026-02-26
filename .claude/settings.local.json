@@ -4,7 +4,9 @@
       "Bash(xargs cat)",
       "Bash(python -c \":*)",
       "Bash(\"d:/Projects/timekeeping/frontend/.gitignore\":*)",
-      "Bash(ls -la src/**/*.tsx src/**/*.ts src/*.tsx)"
+      "Bash(ls -la src/**/*.tsx src/**/*.ts src/*.tsx)",
+      "Bash(mvn clean compile -q)",
+      "Bash(mvn clean package -DskipTests -q)"
     ]
   }
 }
