@@ -1,37 +1,50 @@
 /* Date Details Panel Styles */
 .details-panel {
   background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 .details-panel.empty {
+  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  color: #999;
-  font-size: 14px;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #ced4da;
   text-align: center;
 }
 
+.empty-state p {
+  font-size: 13px;
+  color: #adb5bd;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Panel header */
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #eee;
-  background: #f9f9f9;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f3f5;
 }
 
 .panel-header h3 {
   margin: 0;
-  font-size: 16px;
-  color: #333;
+  font-size: 15px;
+  color: #212529;
   font-weight: 600;
 }
 
@@ -39,162 +52,187 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #999;
-  padding: 0;
+  color: #adb5bd;
+  padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.3s;
+  border-radius: 4px;
+  transition: all 0.2s;
 }
 
 .close-btn:hover {
-  color: #333;
+  color: #495057;
+  background: #f1f3f5;
 }
 
+/* Date banner */
 .panel-date {
-  padding: 15px 20px;
+  padding: 12px 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 
-.panel-loading,
-.panel-error {
-  padding: 20px;
-  text-align: center;
-  flex: 1;
+/* Loading / error */
+.panel-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.panel-loading {
+  gap: 8px;
+  padding: 24px;
   color: #667eea;
-}
-
-.panel-error {
-  color: #dc3545;
-  font-size: 14px;
-}
-
-.panel-empty {
-  padding: 20px;
-  text-align: center;
-  color: #999;
   font-size: 13px;
 }
 
+.panel-error {
+  padding: 16px 20px;
+  text-align: center;
+  color: #e03131;
+  font-size: 13px;
+}
+
+.panel-empty {
+  padding: 24px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Time detail body */
 .time-details {
   padding: 20px;
-  flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.time-detail-item {
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
-}
-
-.time-detail-item:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.time-detail-item.notes {
-  margin-bottom: 0;
-  padding-bottom: 0;
-}
-
-.time-label {
+/* Clock In → Clock Out row */
+.detail-time-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #666;
+  justify-content: center;
+  gap: 16px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.detail-time-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.detail-time-label {
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: #868e96;
   font-weight: 600;
-  margin-bottom: 8px;
 }
 
-.time-label svg {
-  color: #667eea;
+.detail-time-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #212529;
+  letter-spacing: -0.5px;
 }
 
-.time-value {
-  font-size: 16px;
-  color: #333;
-  font-weight: 500;
+.detail-time-value.time-pending {
+  color: #dee2e6;
+}
+
+.detail-arrow {
+  font-size: 18px;
+  color: #ced4da;
+  margin-top: 14px;
+}
+
+/* Hours progress section */
+.detail-hours-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-hours-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.detail-hours-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #343a40;
+}
+
+.detail-hours-goal {
+  font-size: 12px;
+  color: #adb5bd;
+}
+
+.detail-progress-track {
+  background: #e9ecef;
+  border-radius: 4px;
+  height: 7px;
+  overflow: hidden;
+}
+
+.detail-progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  min-width: 4px;
+}
+
+.bar-active { background: linear-gradient(90deg, #667eea, #764ba2); }
+.bar-done   { background: #40c057; }
+
+/* Status badge */
+.detail-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  align-self: flex-start;
+}
+
+.detail-status.status-present  { background: #d3f9d8; color: #2f9e44; }
+.detail-status.status-half-day { background: #fff3bf; color: #e67700; }
+.detail-status.status-absent   { background: #ffe3e3; color: #c92a2a; }
+
+/* Metadata rows (timezone, notes) */
+.detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f3f5;
+}
+
+.detail-meta-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #868e96;
+  font-weight: 600;
+}
+
+.detail-meta-value {
+  font-size: 13px;
+  color: #495057;
   word-break: break-word;
 }
 
-.time-value.not-clocked {
-  color: #999;
-  font-style: italic;
-}
-
-.time-value.status-present {
-  color: #28a745;
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 14px;
-}
-
-.time-value.status-half-day {
-  color: #ffc107;
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 14px;
-}
-
-.time-value.status-absent {
-  color: #dc3545;
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 14px;
-}
-
-@media (max-width: 1024px) {
-  .details-panel {
-    height: auto;
-    max-height: 400px;
-  }
-
-  .time-details {
-    max-height: 300px;
-  }
-}
-
+/* Responsive adjustments handled by drawer in Dashboard.css */
 @media (max-width: 768px) {
-  .details-panel {
-    max-height: none;
-  }
-
-  .panel-header {
-    padding: 15px;
-  }
-
-  .panel-header h3 {
-    font-size: 14px;
-  }
-
-  .time-details {
-    padding: 15px;
-  }
-
-  .time-detail-item {
-    margin-bottom: 15px;
-    padding-bottom: 15px;
-  }
-
-  .time-label {
-    font-size: 11px;
-  }
-
-  .time-value {
-    font-size: 14px;
-  }
+  .detail-time-value { font-size: 19px; }
 }

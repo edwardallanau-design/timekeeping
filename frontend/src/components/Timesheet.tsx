@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { timeLogService } from '../services/api';
-import { LogOut } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import AnalogClock from './AnalogClock';
 import type { TimeLogDto, TimesheetProps, ConfirmationData, DevTimeRequest } from '../types';
 import axios from 'axios';
@@ -22,19 +22,30 @@ const COMMON_TIMEZONES = [
 ];
 
 function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
-  const { user, isDeveloper, logout, loading } = useAuth();
-  const [todayLog, setTodayLog]             = useState<TimeLogDto | null>(null);
-  const [isFetching, setIsFetching]         = useState<boolean>(false);
-  const [message, setMessage]               = useState<string>('');
-  const [showConfirmation, setShowConfirmation] = useState<boolean>(false);
-  const [confirmationData, setConfirmationData] = useState<ConfirmationData | null>(null);
-  const [selectedTimezone, setSelectedTimezone] = useState<string>(
+  const { user, isDeveloper, loading } = useAuth();
+  const [todayLog, setTodayLog]               = useState<TimeLogDto | null>(null);
+  const [isFetching, setIsFetching]           = useState<boolean>(false);
+  const [message, setMessage]                 = useState<string>('');
+  const [messageType, setMessageType]         = useState<'success' | 'error'>('success');
+  const [showConfirmation, setShowConfirmation]   = useState<boolean>(false);
+  const [confirmationData, setConfirmationData]   = useState<ConfirmationData | null>(null);
+  const [selectedTimezone, setSelectedTimezone]   = useState<string>(
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
-  const [customDateTime, setCustomDateTime] = useState<string>('');
-  const [usedDevMode, setUsedDevMode] = useState<boolean | null>(null);
+  const [customDateTime, setCustomDateTime]   = useState<string>('');
+  const [usedDevMode, setUsedDevMode]         = useState<boolean | null>(null);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState<boolean>(false);
-  const [dateToDelete, setDateToDelete] = useState<string>('');
+  const [dateToDelete, setDateToDelete]       = useState<string>('');
+  const [showDevPanel, setShowDevPanel]       = useState<boolean>(false);
+  const [, forceUpdate]                       = useState<number>(0);
+
+  // Re-render every minute while actively clocked in to keep duration live
+  useEffect(() => {
+    if (todayLog && !todayLog.timeOut) {
+      const interval = setInterval(() => forceUpdate(n => n + 1), 60000);
+      return () => clearInterval(interval);
+    }
+  }, [todayLog]);
 
   useEffect(() => {
     if (!loading && user?.id) {
@@ -52,35 +63,36 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
     }
   };
 
+  const showMsg = (msg: string, type: 'success' | 'error' = 'success'): void => {
+    setMessage(msg);
+    setMessageType(type);
+    setTimeout(() => setMessage(''), 3000);
+  };
+
+  const getLocalDateTimeString = (): string => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  };
+
   const handleTimeIn = async (): Promise<void> => {
     setIsFetching(true);
     try {
-      // Get user's local timezone and current local time
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      const dateTimeString = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-
       const response = await timeLogService.timeInWithDateTime({
-        dateTime: dateTimeString,
-        timezone: userTimezone,
+        dateTime: getLocalDateTimeString(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
       setTodayLog(response.data);
       setUsedDevMode(false);
-      setMessage('Time in recorded successfully!');
+      showMsg('Time in recorded successfully!');
       onTimeLogUpdate();
-      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setMessage((err.response?.data as { message?: string })?.message ?? 'Error recording time in');
-      } else {
-        setMessage('Error recording time in');
-      }
+      showMsg(
+        axios.isAxiosError(err)
+          ? ((err.response?.data as { message?: string })?.message ?? 'Error recording time in')
+          : 'Error recording time in',
+        'error'
+      );
     } finally {
       setIsFetching(false);
     }
@@ -88,13 +100,9 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
 
   const handleTimeOut = (): void => {
     if (!todayLog) return;
-
-    const timeInMs    = new Date(todayLog.timeIn).getTime();
-    const timeOutMs   = Date.now();
-    const diffMs      = timeOutMs - timeInMs;
+    const diffMs      = Date.now() - new Date(todayLog.timeIn).getTime();
     const hoursWorked = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100;
     const status: ConfirmationData['status'] = hoursWorked < 8 ? 'half-day' : 'present';
-
     setConfirmationData({ hoursWorked, status });
     setShowConfirmation(true);
   };
@@ -103,33 +111,22 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
     setShowConfirmation(false);
     setIsFetching(true);
     try {
-      // Get user's local timezone and current local time
-      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      const dateTimeString = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-
       const response = await timeLogService.timeOutWithDateTime({
-        dateTime: dateTimeString,
-        timezone: userTimezone,
+        dateTime: getLocalDateTimeString(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
       setTodayLog(response.data);
       setUsedDevMode(null);
-      setMessage('Time out recorded successfully!');
-      onTimeLogUpdate();
       setConfirmationData(null);
-      setTimeout(() => setMessage(''), 3000);
+      showMsg('Time out recorded successfully!');
+      onTimeLogUpdate();
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setMessage((err.response?.data as { message?: string })?.message ?? 'Error recording time out');
-      } else {
-        setMessage('Error recording time out');
-      }
+      showMsg(
+        axios.isAxiosError(err)
+          ? ((err.response?.data as { message?: string })?.message ?? 'Error recording time out')
+          : 'Error recording time out',
+        'error'
+      );
     } finally {
       setIsFetching(false);
     }
@@ -142,13 +139,10 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
 
   const handleDeleteTimeLog = (): void => {
     if (!customDateTime) {
-      setMessage('Please select a date to delete');
+      showMsg('Please select a date to delete', 'error');
       return;
     }
-
-    // Extract date from customDateTime (format: "YYYY-MM-DDTHH:mm")
-    const date = customDateTime.substring(0, 10);
-    setDateToDelete(date);
+    setDateToDelete(customDateTime.substring(0, 10));
     setShowDeleteConfirmation(true);
   };
 
@@ -157,17 +151,17 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
     setIsFetching(true);
     try {
       await timeLogService.deleteTimeLog(dateToDelete);
-      setMessage('Time log deleted successfully!');
+      showMsg('Time log deleted successfully!');
       setCustomDateTime('');
       setDateToDelete('');
       onTimeLogUpdate();
-      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setMessage((err.response?.data as { message?: string })?.message ?? 'Error deleting time log');
-      } else {
-        setMessage('Error deleting time log');
-      }
+      showMsg(
+        axios.isAxiosError(err)
+          ? ((err.response?.data as { message?: string })?.message ?? 'Error deleting time log')
+          : 'Error deleting time log',
+        'error'
+      );
     } finally {
       setIsFetching(false);
     }
@@ -179,122 +173,188 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
   };
 
   const handleDevTimeIn = async (): Promise<void> => {
-    if (!customDateTime) {
-      setMessage('Please select a date and time');
-      return;
-    }
-
+    if (!customDateTime) { showMsg('Please select a date and time', 'error'); return; }
     setIsFetching(true);
     try {
-      // Format datetime directly without UTC conversion to preserve local timezone
-      const dateTimeFormatted = customDateTime.length === 16 ? `${customDateTime}:00` : customDateTime;
       const request: DevTimeRequest = {
-        dateTime: dateTimeFormatted,
+        dateTime: customDateTime.length === 16 ? `${customDateTime}:00` : customDateTime,
         timezone: selectedTimezone,
       };
       const response = await timeLogService.timeInCustom(request);
       setTodayLog(response.data);
       setUsedDevMode(true);
-      setMessage('Dev Time In recorded successfully!');
       setCustomDateTime('');
+      showMsg('Dev Time In recorded successfully!');
       onTimeLogUpdate();
-      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setMessage((err.response?.data as { message?: string })?.message ?? 'Error recording dev time in');
-      } else {
-        setMessage('Error recording dev time in');
-      }
+      showMsg(
+        axios.isAxiosError(err)
+          ? ((err.response?.data as { message?: string })?.message ?? 'Error recording dev time in')
+          : 'Error recording dev time in',
+        'error'
+      );
     } finally {
       setIsFetching(false);
     }
   };
 
   const handleDevTimeOut = async (): Promise<void> => {
-    if (!customDateTime) {
-      setMessage('Please select a date and time');
-      return;
-    }
-
+    if (!customDateTime) { showMsg('Please select a date and time', 'error'); return; }
     setIsFetching(true);
     try {
-      // Format datetime directly without UTC conversion to preserve local timezone
-      const dateTimeFormatted = customDateTime.length === 16 ? `${customDateTime}:00` : customDateTime;
       const request: DevTimeRequest = {
-        dateTime: dateTimeFormatted,
+        dateTime: customDateTime.length === 16 ? `${customDateTime}:00` : customDateTime,
         timezone: selectedTimezone,
       };
       const response = await timeLogService.timeOutCustom(request);
       setTodayLog(response.data);
       setUsedDevMode(null);
-      setMessage('Dev Time Out recorded successfully!');
       setCustomDateTime('');
+      showMsg('Dev Time Out recorded successfully!');
       onTimeLogUpdate();
-      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setMessage((err.response?.data as { message?: string })?.message ?? 'Error recording dev time out');
-      } else {
-        setMessage('Error recording dev time out');
-      }
+      showMsg(
+        axios.isAxiosError(err)
+          ? ((err.response?.data as { message?: string })?.message ?? 'Error recording dev time out')
+          : 'Error recording dev time out',
+        'error'
+      );
     } finally {
       setIsFetching(false);
     }
   };
 
-  const formatTime = (dateStr: string): string => new Date(dateStr).toLocaleTimeString();
+  const formatTime = (dateStr: string): string =>
+    new Date(dateStr).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+
+  const getLiveDuration = (): string => {
+    if (!todayLog) return '';
+    const start    = new Date(todayLog.timeIn).getTime();
+    const end      = todayLog.timeOut ? new Date(todayLog.timeOut).getTime() : Date.now();
+    const totalMin = Math.floor((end - start) / 60000);
+    const h        = Math.floor(totalMin / 60);
+    const m        = totalMin % 60;
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  };
+
+  const getProgressPercent = (): number => {
+    if (!todayLog) return 0;
+    const start = new Date(todayLog.timeIn).getTime();
+    const end   = todayLog.timeOut ? new Date(todayLog.timeOut).getTime() : Date.now();
+    const hours = (end - start) / (1000 * 60 * 60);
+    return Math.min(Math.round((hours / 8) * 100), 100);
+  };
+
+  const getStatusInfo = (): { label: string; cssClass: string } => {
+    if (!todayLog)         return { label: 'Not clocked in', cssClass: 'status-idle'    };
+    if (!todayLog.timeOut) return { label: 'Active',         cssClass: 'status-active'  };
+    switch (todayLog.status) {
+      case 'PRESENT':  return { label: 'Present',  cssClass: 'status-present' };
+      case 'HALF_DAY': return { label: 'Half Day', cssClass: 'status-halfday' };
+      case 'ABSENT':   return { label: 'Absent',   cssClass: 'status-absent'  };
+      default:         return { label: 'Done',     cssClass: 'status-present' };
+    }
+  };
+
+  const canTimeIn  = !isFetching && usedDevMode !== true &&
+    !(todayLog !== null && !!todayLog.timeIn && !todayLog.timeOut);
+  const canTimeOut = !isFetching && usedDevMode !== true &&
+    todayLog !== null && !!todayLog.timeIn && !todayLog.timeOut;
+
+  const { label: statusLabel, cssClass: statusClass } = getStatusInfo();
+  const progress  = getProgressPercent();
+  const duration  = getLiveDuration();
+  const todayDate = new Date().toLocaleDateString(undefined, {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
 
   return (
     <div className="timesheet-container">
-      <div className="timesheet-header">
-        <h1>Welcome, {user?.name}</h1>
-      </div>
-
       <div className="timesheet-content">
-        <div className="time-card">
-          {isDeveloper ? (
-            <div className="dev-clocks">
-              <AnalogClock label="Local" />
-              <AnalogClock timezone={selectedTimezone} label={selectedTimezone} />
-            </div>
-          ) : (
+        {isDeveloper ? (
+          <div className="dev-clocks">
+            <AnalogClock label="Local" />
+            <AnalogClock timezone={selectedTimezone} label={selectedTimezone} />
+          </div>
+        ) : (
+          <div className="clock-wrapper">
             <AnalogClock />
-          )}
-          <h2>Today&apos;s Attendance</h2>
-
-          {message && <div className="message">{message}</div>}
-
-          <div className="time-info">
-            {todayLog && (
-              <>
-                <p>Time In: {formatTime(todayLog.timeIn)}</p>
-                {todayLog.timeOut && <p>Time Out: {formatTime(todayLog.timeOut)}</p>}
-              </>
-            )}
           </div>
+        )}
 
-          <div className="button-group">
-            <button
-              onClick={handleTimeIn}
-              disabled={isFetching || usedDevMode === true || (todayLog !== null && !!todayLog.timeIn && !todayLog.timeOut)}
-              className="btn btn-primary"
-              title={usedDevMode === true ? 'Use Dev Time Out to complete dev mode shift' : ''}
-            >
-              {isFetching ? 'Processing...' : 'Time In'}
-            </button>
-            <button
-              onClick={handleTimeOut}
-              disabled={isFetching || usedDevMode === true || todayLog === null || !!todayLog.timeOut}
-              className="btn btn-danger"
-              title={usedDevMode === true ? 'Use Dev Time Out to complete dev mode shift' : ''}
-            >
-              {isFetching ? 'Processing...' : 'Time Out'}
-            </button>
+        <div className="today-date">{todayDate}</div>
+
+        <div className={`status-pill ${statusClass}`}>
+          <span className="status-dot" />
+          {statusLabel}
+        </div>
+
+        {message && (
+          <div className={`message ${messageType === 'error' ? 'message-error' : ''}`}>
+            {message}
           </div>
+        )}
 
-          {isDeveloper && (
-            <div className="dev-panel">
-              <div className="dev-badge">DEV TOOLS</div>
+        {todayLog && (
+          <div className="time-summary">
+            <div className="time-row">
+              <div className="time-block">
+                <div className="time-label-sm">In</div>
+                <div className="time-val">{formatTime(todayLog.timeIn)}</div>
+              </div>
+              <div className="time-arrow">→</div>
+              <div className="time-block">
+                <div className="time-label-sm">Out</div>
+                <div className="time-val">
+                  {todayLog.timeOut
+                    ? formatTime(todayLog.timeOut)
+                    : <span className="time-pending">—</span>}
+                </div>
+              </div>
+            </div>
+            <div className="duration-row">
+              <span>{duration}</span>
+              <span className="duration-goal">/ 8h goal</span>
+            </div>
+            <div className="progress-bar">
+              <div
+                className={`progress-fill ${todayLog.timeOut ? 'fill-done' : 'fill-active'}`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="button-group">
+          <button
+            onClick={handleTimeIn}
+            disabled={!canTimeIn}
+            className={`btn ${canTimeIn ? 'btn-primary' : 'btn-muted'}`}
+            title={usedDevMode === true ? 'Use Dev Time Out to complete dev mode shift' : ''}
+          >
+            {isFetching ? 'Processing...' : 'Clock In'}
+          </button>
+          <button
+            onClick={handleTimeOut}
+            disabled={!canTimeOut}
+            className={`btn ${canTimeOut ? 'btn-danger' : 'btn-muted'}`}
+            title={usedDevMode === true ? 'Use Dev Time Out to complete dev mode shift' : ''}
+          >
+            {isFetching ? 'Processing...' : 'Clock Out'}
+          </button>
+        </div>
+
+        {isDeveloper && (
+          <div className="dev-panel">
+            <button
+              className="dev-panel-toggle"
+              onClick={() => setShowDevPanel(prev => !prev)}
+            >
+              <span className="dev-badge">DEV TOOLS</span>
+              <ChevronDown size={15} className={`dev-chevron ${showDevPanel ? 'rotated' : ''}`} />
+            </button>
+
+            {showDevPanel && (
               <div className="dev-controls">
                 <div className="dev-form-group">
                   <label htmlFor="dev-timezone">Timezone:</label>
@@ -327,40 +387,33 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
                     disabled={isFetching || !customDateTime}
                     className="btn btn-dev-in"
                   >
-                    {isFetching ? 'Processing...' : '[Dev Time In]'}
+                    {isFetching ? '...' : 'Dev In'}
                   </button>
                   <button
                     onClick={handleDevTimeOut}
                     disabled={isFetching || !customDateTime}
                     className="btn btn-dev-out"
                   >
-                    {isFetching ? 'Processing...' : '[Dev Time Out]'}
+                    {isFetching ? '...' : 'Dev Out'}
                   </button>
                   <button
                     onClick={handleDeleteTimeLog}
                     disabled={isFetching || !customDateTime}
                     className="btn btn-dev-delete"
                   >
-                    {isFetching ? 'Processing...' : '[Delete]'}
+                    {isFetching ? '...' : 'Delete'}
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="timesheet-footer">
-        <button onClick={logout} className="logout-btn">
-          <LogOut size={20} />
-          Logout
-        </button>
+            )}
+          </div>
+        )}
       </div>
 
       {showConfirmation && confirmationData && (
         <div className="modal-overlay">
           <div className="confirmation-modal">
-            <h3>Confirm Time Out</h3>
+            <h3>Confirm Clock Out</h3>
             <div className="confirmation-content">
               <p className="hours-display">
                 Total Hours Worked: <strong>{confirmationData.hoursWorked}h</strong>
@@ -385,13 +438,11 @@ function Timesheet({ onTimeLogUpdate }: TimesheetProps) {
               <p className="delete-warning">
                 Are you sure you want to delete the time log for <strong>{dateToDelete}</strong>?
               </p>
-              <p className="delete-note">
-                This action cannot be undone.
-              </p>
+              <p className="delete-note">This action cannot be undone.</p>
             </div>
             <div className="modal-buttons">
               <button onClick={confirmDeleteTimeLog} className="btn-delete">Delete</button>
-              <button onClick={cancelDeleteTimeLog} className="btn-cancel">Cancel</button>
+              <button onClick={cancelDeleteTimeLog}  className="btn-cancel">Cancel</button>
             </div>
           </div>
         </div>

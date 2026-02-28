@@ -6,7 +6,11 @@
       "Bash(\"d:/Projects/timekeeping/frontend/.gitignore\":*)",
       "Bash(ls -la src/**/*.tsx src/**/*.ts src/*.tsx)",
       "Bash(mvn clean compile -q)",
-      "Bash(mvn clean package -DskipTests -q)"
+      "Bash(mvn clean package -DskipTests -q)",
+      "Bash(docker-compose down)",
+      "Bash(docker-compose build --no-cache)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(mvn compile -q)"
     ]
   }
 }
