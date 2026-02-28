@@ -2,6 +2,7 @@ package com.timekeeping.presentation.timelog;
 
 import com.timekeeping.application.timelog.TimeLogService;
 import com.timekeeping.infrastructure.security.UserPrincipal;
+import com.timekeeping.presentation.timelog.dto.AttendanceLogDto;
 import com.timekeeping.presentation.timelog.dto.DailyLogResponse;
 import com.timekeeping.presentation.timelog.dto.MonthlyAttendanceResponse;
 import com.timekeeping.presentation.timelog.dto.TimeLogDto;
@@ -66,7 +67,7 @@ public class TimeLogController {
             @RequestParam int month) {
         var logs = timeLogService.getMonthlyAttendance(principal.getId(), year, month)
                 .stream()
-                .map(TimeLogDto::from)
+                .map(AttendanceLogDto::from)
                 .toList();
         return ResponseEntity.ok(new MonthlyAttendanceResponse(true, logs));
     }

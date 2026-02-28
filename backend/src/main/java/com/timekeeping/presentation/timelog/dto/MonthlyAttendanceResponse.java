@@ -4,5 +4,5 @@ import java.util.List;
 
 public record MonthlyAttendanceResponse(
         boolean success,
-        List<TimeLogDto> logs
+        List<AttendanceLogDto> logs
 ) {}

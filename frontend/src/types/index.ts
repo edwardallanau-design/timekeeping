@@ -21,12 +21,15 @@ export type AttendanceStatus = 'PRESENT' | 'HALF_DAY' | 'ABSENT';
  * timeOut is null when the user has clocked in but not yet clocked out.
  */
 export interface TimeLogDto {
-  id: number;
-  userId: number;
+  id: string;
+  userId: string;
+  date: string;
   timeIn: string;
   timeOut: string | null;
   hoursWorked: number;
   status: AttendanceStatus;
+  notes: string | null;
+  timezone: string | null;
 }
 
 /**
